@@ -1,21 +1,43 @@
-import React from "react";
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { FontAwesome } from "@expo/vector-icons"; // ou react-native-vector-icons se estiver fora do Expo
+import { useRouter } from "expo-router";
 
 export default function GreyBox() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const handleLogin = () => {
+      router.push("/home");
+  };
   return (
     <View style={styles.containerBox}>
       <Text style={styles.label}>E-mail</Text>
-      <TextInput style={styles.input} placeholder="example@example.com" placeholderTextColor="#A9A9A9" />
+      <TextInput
+        style={styles.input}
+        placeholder="example@example.com"
+        placeholderTextColor="#A9A9A9"
+      />
 
       <Text style={styles.label}>Senha</Text>
       <View style={styles.passwordContainer}>
-        <TextInput style={styles.inputPassword} placeholder="********" secureTextEntry />
+        <TextInput
+          style={styles.inputPassword}
+          placeholder="********"
+          secureTextEntry
+        />
         <FontAwesome name="eye" size={20} color="#555" style={styles.eyeIcon} />
       </View>
 
       <TouchableOpacity style={styles.loginButton}>
-        <Text style={styles.loginText}>Log In</Text>
+        <Text style={styles.loginText} onPress={handleLogin}>Log In</Text>
       </TouchableOpacity>
 
       <TouchableOpacity>
@@ -27,7 +49,11 @@ export default function GreyBox() {
       </TouchableOpacity>
 
       <Text style={styles.fingerprintText}>
-        Utilize <Text style={{ color: "#00D09E", fontWeight: "bold" }}>Fingerprint</Text> Para Acessar
+        Utilize{" "}
+        <Text style={{ color: "#00D09E", fontWeight: "bold" }}>
+          Fingerprint
+        </Text>{" "}
+        Para Acessar
       </Text>
 
       <View style={styles.socialContainer}>
@@ -36,7 +62,8 @@ export default function GreyBox() {
       </View>
 
       <Text style={styles.bottomText}>
-        Não Possui Uma Conta? <Text style={{ color: "#00D09E" }}>Criar Conta</Text>
+        Não Possui Uma Conta?{" "}
+        <Text style={{ color: "#00D09E" }}>Criar Conta</Text>
       </Text>
     </View>
   );
@@ -53,7 +80,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
   },
-  
+
   label: {
     alignSelf: "flex-start",
     marginLeft: 10,
