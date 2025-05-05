@@ -40,6 +40,22 @@ export default function GreyBox() {
       value: "-$674,40",
       iconColor: "#1C92D2",
     },
+    {
+      icon: "shopping-cart",
+      label: "Groceries",
+      time: "17:00 - April 24",
+      category: "Pantry",
+      value: "-$100,00",
+      iconColor: "#29ABE2",
+    },
+    {
+      icon: "home",
+      label: "Rent",
+      time: "8:30 - April 15",
+      category: "Rent",
+      value: "-$674,40",
+      iconColor: "#1C92D2",
+    },
   ];
 
   return (
@@ -86,7 +102,6 @@ export default function GreyBox() {
   );
 }
 
-// Estilos (mantidos iguais)
 const styles = StyleSheet.create({
   containerBox: {
     flex: 1,

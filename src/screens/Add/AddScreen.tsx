@@ -1,11 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import GreyBox from "./components/GreyBox";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
 import { useRouter } from "expo-router";
 
-export default function AccountScreen() {
+export default function AddScreen() {
   const totalBalance = 7783.0;
   const totalExpense = 1187.4;
   const rawPercentage = (totalExpense / totalBalance) * 100;
@@ -33,58 +33,17 @@ export default function AccountScreen() {
   };
   return (
     <View style={styles.container}>
-      <ScrollView>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>
         <View>
-          <Text style={styles.title}>Account Balance</Text>
+          <Text style={styles.title}>Add</Text>
         </View>
         <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
       </View>
 
-      <View style={styles.balanceBox}>
-        <View style={styles.balanceRow}>
-          <Text style={styles.balanceLabel}>💰 Total Balance</Text>
-          <Text style={styles.expenseLabel}>💸 Total Expense</Text>
-        </View>
-        <View style={styles.balanceRow}>
-          <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)}</Text>
-          <Text style={styles.expenseAmount}>- ${totalExpense.toFixed(2)}</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.progressBarContainer}>
-          <View
-            style={[
-              styles.progressBarFill,
-              { width: `${expensePercentage}%` as `${number}%` },
-            ]}
-          />
-        </View>
-
-        <View style={styles.lastTransactionsContainer}>
-          <View style={styles.transactionBox}>
-            <FontAwesome name="arrow-down" size={24} color="#00D09E" />
-            <Text style={styles.transactionLabel}>Última entrada</Text>
-            <Text style={styles.transactionAmount}>+ $250.00</Text>
-          </View>
-          <View style={styles.transactionBox}>
-            <FontAwesome name="arrow-up" size={24} color="#FF5C5C" />
-            <Text style={styles.transactionLabel}>Última saída</Text>
-            <Text style={styles.transactionAmount}>- $99.90</Text>
-          </View>
-        </View>
-        <Text style={styles.progressText}>
-          {expensePercentage}% of your expenses.{" "}
-          {expensePercentage < 50 ? "Looks Good." : "Be careful!"}
-        </Text>
-      </View>
-
       <GreyBox />
-      </ScrollView>
       <BottomBar onPress={handleNavigate} />
     </View>
   );
@@ -169,29 +128,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginHorizontal: 20,
     marginBlock: 20,
-  },
-  transactionBox: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 15,
-    alignItems: "center",
-    width: "45%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  transactionLabel: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "600",
-  },
-  transactionAmount: {
-    marginTop: 5,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
   },
 });

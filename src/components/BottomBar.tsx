@@ -1,57 +1,72 @@
 // components/BottomBar.tsx
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import React from "react";
+import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+
+// Lista de rotas válidas
+const items = [
+  { route: "/home", icon: "home", label: "Início" },
+  { route: "/notification", icon: "bell", label: "Notificações" },
+  { route: "/account", icon: "folder-open", label: "Projetos" },
+  { route: "/analysis", icon: "line-chart", label: "Análises" },
+  { route: "/categories", icon: "th-large", label: "Categorias" },
+  { route: "/perfil", icon: "user-circle", label: "Perfil" },
+] as const;
+
+type RoutePath = typeof items[number]["route"];
 
 interface BottomBarProps {
-  onPress?: (route: string) => void;
+  onPress?: (route: RoutePath) => void;
 }
 
 export default function BottomBar({ onPress }: BottomBarProps) {
+  const router = useRouter();
+
+  const handleNavigate = (route: RoutePath) => {
+    router.push(route);
+  };
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => onPress?.('inicio')} style={styles.iconButton}>
-        <FontAwesome name="home" size={24} color="#052224" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => onPress?.('sobre')} style={styles.iconButton}>
-        <FontAwesome name="bell" size={24} color="#052224" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => onPress?.('projetos')} style={styles.iconButton}>
-        <FontAwesome name="folder" size={24} color="#052224" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => onPress?.('inicio')} style={styles.iconButton}>
-        <FontAwesome name="user" size={24} color="#052224" />
-      </TouchableOpacity>
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.route}
+          onPress={() => handleNavigate(item.route)}
+          style={styles.iconButton}
+        >
+          <FontAwesome name={item.icon} size={22} color="#052224" />
+          <Text style={styles.label}>{item.label}</Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      backgroundColor: '#DFF7E2',
-      paddingVertical: 40, // aumenta a altura
-      borderTopColor: '#ddd',
-      borderTopWidth: 1,
-      borderTopLeftRadius: 50, 
-      borderTopRightRadius: 50,
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 10,
-    },
-    iconButton: {
-      alignItems: 'center',
-    },
-    label: {
-      fontSize: 12,
-      color: '#000',
-      marginTop: 4,
-    },
-  });
-  
+  container: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: "#EAF8EE",
+    paddingVertical: 30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 8,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  iconButton: {
+    alignItems: "center",
+    gap: 4,
+  },
+  label: {
+    fontSize: 12,
+    color: "#444",
+  },
+});

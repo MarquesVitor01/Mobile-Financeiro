@@ -1,9 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import GreyBox from "./components/GreyBox";
 import { FontAwesome } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
-import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   const totalBalance = 7783.0;
@@ -11,71 +10,55 @@ export default function HomeScreen() {
   const rawPercentage = (totalExpense / totalBalance) * 100;
   const expensePercentage = parseFloat(rawPercentage.toFixed(1));
 
-  const router = useRouter();
-
-  const handleNavigate = (route: string) => {
-    switch (route) {
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      default:
-        console.warn("Rota inválida:", route);
-    }
-  };
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hi, Welcome Back</Text>
-          <Text style={styles.subGreeting}>Good Morning</Text>
-        </View>
-        <View style={styles.icon}>
-          <FontAwesome
-            name="user-circle"
-            size={28}
-            color="#fff"
-            style={styles.profileIcon}
-          />
-        </View>
-      </View>
-
-      <View style={styles.balanceBox}>
-        <View style={styles.balanceRow}>
-          <Text style={styles.balanceLabel}>💰 Total Balance</Text>
-          <Text style={styles.expenseLabel}>💸 Total Expense</Text>
-        </View>
-        <View style={styles.balanceRow}>
-          <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)}</Text>
-          <Text style={styles.expenseAmount}>- ${totalExpense.toFixed(2)}</Text>
+      <ScrollView>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Hi, Welcome Back</Text>
+            <Text style={styles.subGreeting}>Good Morning</Text>
+          </View>
+          <View style={styles.icon}>
+            <FontAwesome
+              name="user-circle"
+              size={28}
+              color="#fff"
+              style={styles.profileIcon}
+            />
+          </View>
         </View>
 
-        <View style={styles.divider} />
+        <View style={styles.balanceBox}>
+          <View style={styles.balanceRow}>
+            <Text style={styles.balanceLabel}>💰 Total Balance</Text>
+            <Text style={styles.expenseLabel}>💸 Total Expense</Text>
+          </View>
+          <View style={styles.balanceRow}>
+            <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)}</Text>
+            <Text style={styles.expenseAmount}>
+              - ${totalExpense.toFixed(2)}
+            </Text>
+          </View>
 
-        <View style={styles.progressBarContainer}>
-          <View
-            style={[
-              styles.progressBarFill,
-              { width: `${expensePercentage}%` as `${number}%` },
-            ]}
-          />
+          <View style={styles.divider} />
+
+          <View style={styles.progressBarContainer}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${expensePercentage}%` as `${number}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {expensePercentage}% of your expenses.{" "}
+            {expensePercentage < 50 ? "Looks Good." : "Be careful!"}
+          </Text>
         </View>
-        <Text style={styles.progressText}>
-          {expensePercentage}% of your expenses.{" "}
-          {expensePercentage < 50 ? "Looks Good." : "Be careful!"}
-        </Text>
-      </View>
 
-      <GreyBox />
-      <BottomBar onPress={handleNavigate} />
+        <GreyBox />
+      </ScrollView>
+      <BottomBar/>
     </View>
   );
 }

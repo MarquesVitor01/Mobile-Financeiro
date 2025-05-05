@@ -7,16 +7,32 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons"; // ou react-native-vector-icons se estiver fora do Expo
+import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../../config/firebaseConfig";
 
 export default function GreyBox() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleLogin = () => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha e-mail e senha.");
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       router.push("/home");
+    } catch (error) {
+      console.log("Erro ao logar:", error);
+      Alert.alert("Erro", "Credenciais inválidas ou erro na autenticação.");
+    }
   };
+
   return (
     <View style={styles.containerBox}>
       <Text style={styles.label}>E-mail</Text>
@@ -24,6 +40,10 @@ export default function GreyBox() {
         style={styles.input}
         placeholder="example@example.com"
         placeholderTextColor="#A9A9A9"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
 
       <Text style={styles.label}>Senha</Text>
@@ -31,13 +51,24 @@ export default function GreyBox() {
         <TextInput
           style={styles.inputPassword}
           placeholder="********"
-          secureTextEntry
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
         />
-        <FontAwesome name="eye" size={20} color="#555" style={styles.eyeIcon} />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeIcon}
+        >
+          <FontAwesome
+            name={showPassword ? "eye-slash" : "eye"}
+            size={20}
+            color="#555"
+          />
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.loginButton}>
-        <Text style={styles.loginText} onPress={handleLogin}>Log In</Text>
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+        <Text style={styles.loginText}>Log In</Text>
       </TouchableOpacity>
 
       <TouchableOpacity>
