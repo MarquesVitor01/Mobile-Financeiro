@@ -12,7 +12,13 @@
     "lint": "expo lint"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-native/extend-expect"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?react-native|@react-native|expo(nent)?|@expo(nent)?|firebase|@firebase|@react-navigation/.*)"
+    ]
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
