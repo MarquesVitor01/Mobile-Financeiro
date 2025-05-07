@@ -20,6 +20,7 @@
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "@testing-library/react-native": "^13.2.0",
     "d3-scale": "^4.0.2",
     "expo": "~52.0.43",
     "expo-app-loading": "^2.1.1",
