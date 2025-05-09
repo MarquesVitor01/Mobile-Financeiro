@@ -1,29 +1,63 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import GreyBox from "./components/GreyBox";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
 import { useRouter } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/src/config/firebaseConfig";
+import { useUser } from "@/src/context/UserContext"; // IMPORTADO
 
 export default function AccountScreen() {
-  const totalBalance = 7783.0;
-  const totalExpense = 1187.4;
-  const rawPercentage = (totalExpense / totalBalance) * 100;
-  const expensePercentage = parseFloat(rawPercentage.toFixed(1));
+  const { user } = useUser(); // USUÁRIO ATUAL
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [expensePercentage, setExpensePercentage] = useState(0);
 
   const router = useRouter();
 
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user) return;
+
+        const querySnapshot = await getDocs(collection(db, "financeiro"));
+        let totalBalanceTemp = 0;
+        let totalExpenseTemp = 0;
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const valor = data.valor / 100;
+
+          if (data.userId === user.id) { // FILTRO POR ID DO USUÁRIO
+            if (data.setor === "entrada") {
+              totalBalanceTemp += valor;
+            } else if (data.setor === "saida") {
+              totalExpenseTemp += valor;
+            }
+          }
+        });
+
+        setTotalBalance(totalBalanceTemp);
+        setTotalExpense(totalExpenseTemp);
+
+        const rawPercentage = (totalExpenseTemp / totalBalanceTemp) * 100;
+        setExpensePercentage(parseFloat(rawPercentage.toFixed(1)));
+      } catch (error) {
+        console.error("Erro ao buscar transações:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user]);
+
   const handleNavigate = (route: string) => {
     switch (route) {
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
       case "":
         router.push("/");
         break;
@@ -31,15 +65,15 @@ export default function AccountScreen() {
         console.warn("Rota inválida:", route);
     }
   };
+
   return (
     <View style={styles.container}>
-      <ScrollView>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>
         <View>
-          <Text style={styles.title}>Account Balance</Text>
+          <Text style={styles.title}>Registros</Text>
         </View>
         <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
       </View>
@@ -50,8 +84,12 @@ export default function AccountScreen() {
           <Text style={styles.expenseLabel}>💸 Total Expense</Text>
         </View>
         <View style={styles.balanceRow}>
-          <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)}</Text>
-          <Text style={styles.expenseAmount}>- ${totalExpense.toFixed(2)}</Text>
+          <Text style={styles.balanceAmount}>
+            R$ {totalBalance.toFixed(2).replace(".", ",")}
+          </Text>
+          <Text style={styles.expenseAmount}>
+            - R$ {totalExpense.toFixed(2).replace(".", ",")}
+          </Text>
         </View>
 
         <View style={styles.divider} />
@@ -64,27 +102,14 @@ export default function AccountScreen() {
             ]}
           />
         </View>
-
-        <View style={styles.lastTransactionsContainer}>
-          <View style={styles.transactionBox}>
-            <FontAwesome name="arrow-down" size={24} color="#00D09E" />
-            <Text style={styles.transactionLabel}>Última entrada</Text>
-            <Text style={styles.transactionAmount}>+ $250.00</Text>
-          </View>
-          <View style={styles.transactionBox}>
-            <FontAwesome name="arrow-up" size={24} color="#FF5C5C" />
-            <Text style={styles.transactionLabel}>Última saída</Text>
-            <Text style={styles.transactionAmount}>- $99.90</Text>
-          </View>
-        </View>
         <Text style={styles.progressText}>
           {expensePercentage}% of your expenses.{" "}
           {expensePercentage < 50 ? "Looks Good." : "Be careful!"}
         </Text>
       </View>
 
-      <GreyBox />
-      </ScrollView>
+      <GreyBox totalBalance={totalBalance} totalExpense={totalExpense} />
+
       <BottomBar onPress={handleNavigate} />
     </View>
   );
@@ -103,15 +128,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  icon: {},
   title: {
     fontSize: 22,
     color: "#fff",
     fontWeight: "bold",
     textAlign: "center",
-  },
-  profileIcon: {
-    marginLeft: "auto",
   },
   balanceBox: {
     marginTop: 20,
@@ -163,35 +184,5 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#ffffff60",
     marginVertical: 10,
-  },
-  lastTransactionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginHorizontal: 20,
-    marginBlock: 20,
-  },
-  transactionBox: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 15,
-    alignItems: "center",
-    width: "45%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  transactionLabel: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "600",
-  },
-  transactionAmount: {
-    marginTop: 5,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
   },
 });

@@ -1,8 +1,10 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { FontAwesome5, Feather } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/src/config/firebaseConfig";
+import { useUser } from "@/src/context/UserContext"; // <== IMPORTANTE
 
-// Definindo os tipos para ícones válidos do Feather
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
 interface TransactionItem {
@@ -12,63 +14,101 @@ interface TransactionItem {
   category: string;
   value: string;
   iconColor: string;
+  rawDate: Date;
+  setor: string;
+  valor: number;
+  nome: string;
+  gasto: string;
 }
 
-export default function GreyBox() {
-  const transactions: TransactionItem[] = [
-    {
-      icon: "credit-card", // Ícone válido do Feather (substitui "wallet")
-      label: "Salary",
-      time: "18:27 - April 30",
-      category: "Monthly",
-      value: "$4.000,00",
-      iconColor: "#6C63FF",
-    },
-    {
-      icon: "shopping-cart",
-      label: "Groceries",
-      time: "17:00 - April 24",
-      category: "Pantry",
-      value: "-$100,00",
-      iconColor: "#29ABE2",
-    },
-    {
-      icon: "home",
-      label: "Rent",
-      time: "8:30 - April 15",
-      category: "Rent",
-      value: "-$674,40",
-      iconColor: "#1C92D2",
-    },
-    {
-      icon: "shopping-cart",
-      label: "Groceries",
-      time: "17:00 - April 24",
-      category: "Pantry",
-      value: "-$100,00",
-      iconColor: "#29ABE2",
-    },
-    {
-      icon: "home",
-      label: "Rent",
-      time: "8:30 - April 15",
-      category: "Rent",
-      value: "-$674,40",
-      iconColor: "#1C92D2",
-    },
-  ];
+type FilterType = "entrada" | "saida";
+
+interface GreyBoxProps {
+  totalBalance: number;
+  totalExpense: number;
+}
+
+export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
+  const { user } = useUser(); // <== USA O CONTEXTO DO USUÁRIO
+  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const [filtered, setFiltered] = useState<TransactionItem[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>("entrada");
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user) return;
+
+        const querySnapshot = await getDocs(collection(db, "financeiro"));
+        const allTransactions: TransactionItem[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+
+          if (data.userId !== user.id) return; // <== FILTRA POR ID DO USUÁRIO
+
+          const rawDate = new Date(data.data.seconds * 1000);
+          const valor = data.valor / 100;
+
+          allTransactions.push({
+            icon:
+              data.setor === "entrada"
+                ? "arrow-down-circle"
+                : "arrow-up-circle",
+            label: data.nome || "Gasto",
+            time: rawDate.toLocaleString("pt-BR"),
+            category: data.gasto || data.setor || "Outros",
+            value:
+              (data.setor === "saida" ? "-" : "") +
+              `R$ ${valor.toFixed(2).replace(".", ",")}`,
+            iconColor: data.setor === "entrada" ? "#6C63FF" : "#29ABE2",
+            rawDate,
+            setor: data.setor,
+            valor,
+            nome: data.nome || "",
+            gasto: data.gasto || "",
+          });
+        });
+
+        setTransactions(allTransactions);
+      } catch (error) {
+        console.error("Erro ao buscar transações:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user]);
+
+  useEffect(() => {
+    const filteredList = transactions.filter((item) => item.setor === selectedFilter);
+    setFiltered(filteredList);
+  }, [transactions, selectedFilter]);
 
   return (
-    <View style={styles.containerBox}>
-
+    <ScrollView style={styles.containerBox}>
       <View style={styles.tabContainer}>
-        <Text style={styles.tab}>Transactions</Text>
+        <TouchableOpacity onPress={() => setSelectedFilter("entrada")}>
+          <Text
+            style={selectedFilter === "entrada" ? styles.activeTab : styles.tab}
+          >
+            Entrada
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setSelectedFilter("saida")}>
+          <Text
+            style={selectedFilter === "saida" ? styles.activeTab : styles.tab}
+          >
+            Saída
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.transactions}>
-        {transactions.map((item, index) => (
+        {filtered.map((item, index) => (
           <View key={index} style={styles.item}>
-            <View style={[styles.iconCircleItem, { backgroundColor: item.iconColor }]}>
+            <View
+              style={[styles.iconCircleItem, { backgroundColor: item.iconColor }]}
+            >
               <Feather name={item.icon} size={16} color="#fff" />
             </View>
             <View style={styles.itemContent}>
@@ -82,11 +122,10 @@ export default function GreyBox() {
           </View>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
-// Estilos (mantidos iguais)
 const styles = StyleSheet.create({
   containerBox: {
     flex: 1,
@@ -96,46 +135,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
-  },
-  highlightBox: {
-    flexDirection: "row",
-    backgroundColor: "#00D09E1A",
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 30,
-    justifyContent: "space-between",
-  },
-  highlightLeft: {
-    alignItems: "center",
-    width: "40%",
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#00D09E",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  highlightLabel: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#333",
-    textAlign: "center",
-  },
-  highlightRight: {
-    justifyContent: "center",
-    width: "60%",
-  },
-  label: {
-    fontSize: 12,
-    color: "#666",
-  },
-  value: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
   },
   tabContainer: {
     flexDirection: "row",

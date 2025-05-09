@@ -5,7 +5,7 @@ import GreyBox from "./components/GreyBox";
 export default function CadastroScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.title}>Criar Conta</Text>
       <GreyBox />
     </View>
   );

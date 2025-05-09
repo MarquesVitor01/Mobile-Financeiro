@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { FontAwesome5, Feather } from "@expo/vector-icons";
 
 // Definindo os tipos para ícones válidos do Feather
@@ -123,7 +123,7 @@ export default function GreyBox() {
   ];
 
   return (
-    <View style={styles.containerBox}>
+    <ScrollView style={styles.containerBox}>
 
       <View style={styles.tabContainer}>
         <Text style={styles.tab}>Today</Text>
@@ -146,7 +146,7 @@ export default function GreyBox() {
           </View>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

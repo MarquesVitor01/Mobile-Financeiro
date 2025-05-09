@@ -1,8 +1,16 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { FontAwesome5, Feather } from "@expo/vector-icons";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/src/config/firebaseConfig";
+import { useUser } from "@/src/context/UserContext";
 
-// Definindo os tipos para ícones válidos do Feather
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
 interface TransactionItem {
@@ -12,54 +20,117 @@ interface TransactionItem {
   category: string;
   value: string;
   iconColor: string;
+  rawDate: Date;
+  setor: string;
+  valor: number;
+  nome: string;
+  gasto: string;
 }
 
-export default function GreyBox() {
-  const transactions: TransactionItem[] = [
-    {
-      icon: "credit-card", // Ícone válido do Feather (substitui "wallet")
-      label: "Salary",
-      time: "18:27 - April 30",
-      category: "Monthly",
-      value: "$4.000,00",
-      iconColor: "#6C63FF",
-    },
-    {
-      icon: "shopping-cart",
-      label: "Groceries",
-      time: "17:00 - April 24",
-      category: "Pantry",
-      value: "-$100,00",
-      iconColor: "#29ABE2",
-    },
-    {
-      icon: "home",
-      label: "Rent",
-      time: "8:30 - April 15",
-      category: "Rent",
-      value: "-$674,40",
-      iconColor: "#1C92D2",
-    },
-    {
-      icon: "shopping-cart",
-      label: "Groceries",
-      time: "17:00 - April 24",
-      category: "Pantry",
-      value: "-$100,00",
-      iconColor: "#29ABE2",
-    },
-    {
-      icon: "home",
-      label: "Rent",
-      time: "8:30 - April 15",
-      category: "Rent",
-      value: "-$674,40",
-      iconColor: "#1C92D2",
-    },
-  ];
+type Period = "hoje" | "semana" | "mes";
+
+interface GreyBoxProps {
+  totalBalance: number;
+  totalExpense: number;
+}
+
+interface UserData {
+  id: string; // Ensure the `id` property is here
+  name: string;
+  email: string;
+}
+
+export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
+  const { user } = useUser(); // user should be typed as `UserData | null`
+  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const [filtered, setFiltered] = useState<TransactionItem[]>([]);
+  const [gastoPeriodo, setGastoPeriodo] = useState(0);
+  const [gastoComida, setGastoComida] = useState(0);
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>("semana");
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user) {
+          console.log("Usuário não logado.");
+          return; // Se não houver usuário, não busca as transações
+        }
+
+        const querySnapshot = await getDocs(collection(db, "financeiro"));
+        const allTransactions: TransactionItem[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const rawDate = new Date(data.data.seconds * 1000);
+          const valor = data.valor / 100;
+
+          // Verifique se o userId é igual ao id do usuário logado
+          if (data.userId === user.id) {
+            allTransactions.push({
+              icon:
+                data.setor === "entrada"
+                  ? "arrow-down-circle"
+                  : "arrow-up-circle",
+              label: data.nome || "Gasto",
+              time: rawDate.toLocaleString("pt-BR"),
+              category: data.gasto || data.setor || "Outros",
+              value:
+                (data.setor === "saida" ? "-" : "") +
+                `R$ ${valor.toFixed(2).replace(".", ",")}`,
+              iconColor: data.setor === "entrada" ? "#6C63FF" : "#29ABE2",
+              rawDate,
+              setor: data.setor,
+              valor,
+              nome: data.nome || "",
+              gasto: data.gasto || "",
+            });
+          }
+        });
+
+        setTransactions(allTransactions);
+      } catch (error) {
+        console.error("Erro ao buscar transações:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user]); // Certifique-se de que o useEffect depende de 'user'
+
+  useEffect(() => {
+    console.log("User ID:", user?.id); // Verifique o ID do usuário
+    const filteredList = transactions.filter((item) => {
+      const date = item.rawDate;
+      const now = new Date();
+
+      if (selectedPeriod === "hoje") {
+        return (
+          date.getDate() === now.getDate() &&
+          date.getMonth() === now.getMonth() &&
+          date.getFullYear() === now.getFullYear()
+        );
+      }
+
+      if (selectedPeriod === "semana") {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 7);
+        return date >= oneWeekAgo && date <= now;
+      }
+
+      if (selectedPeriod === "mes") {
+        return (
+          date.getMonth() === now.getMonth() &&
+          date.getFullYear() === now.getFullYear()
+        );
+      }
+
+      return false;
+    });
+
+    setFiltered(filteredList);
+  }, [transactions, selectedPeriod, user?.id]); // Garanta que o filtro só ocorra quando o 'user.id' ou os dados das transações mudarem
 
   return (
-    <View style={styles.containerBox}>
+    <ScrollView style={styles.containerBox}>
       <View style={styles.highlightBox}>
         <View style={styles.highlightLeft}>
           <View style={styles.iconCircle}>
@@ -68,23 +139,41 @@ export default function GreyBox() {
           <Text style={styles.highlightLabel}>Savings On Goals</Text>
         </View>
         <View style={styles.highlightRight}>
-          <Text style={styles.label}>Revenue Last Week</Text>
-          <Text style={styles.value}>$4.000.00</Text>
-          <Text style={styles.label}>Food Last Week</Text>
-          <Text style={[styles.value, { color: "#00D09E" }]}>- $100.00</Text>
+          <Text style={styles.label}>Gastos do Período</Text>
+          <Text style={styles.value}>
+            R$ {gastoPeriodo.toFixed(2).replace(".", ",")}
+          </Text>
+          <Text style={styles.label}>Gastos com comida</Text>
+          <Text style={[styles.value, { color: "#00D09E" }]}>
+            - R$ {gastoComida.toFixed(2).replace(".", ",")}
+          </Text>
         </View>
       </View>
 
       <View style={styles.tabContainer}>
-        <Text style={styles.tab}>Daily</Text>
-        <Text style={styles.tab}>Weekly</Text>
-        <Text style={styles.activeTab}>Monthly</Text>
+        {(["hoje", "semana", "mes"] as Period[]).map((period) => (
+          <TouchableOpacity
+            key={period}
+            onPress={() => setSelectedPeriod(period)}
+          >
+            <Text
+              style={selectedPeriod === period ? styles.activeTab : styles.tab}
+            >
+              {period.charAt(0).toUpperCase() + period.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.transactions}>
-        {transactions.map((item, index) => (
+        {filtered.map((item, index) => (
           <View key={index} style={styles.item}>
-            <View style={[styles.iconCircleItem, { backgroundColor: item.iconColor }]}>
+            <View
+              style={[
+                styles.iconCircleItem,
+                { backgroundColor: item.iconColor },
+              ]}
+            >
               <Feather name={item.icon} size={16} color="#fff" />
             </View>
             <View style={styles.itemContent}>
@@ -98,7 +187,7 @@ export default function GreyBox() {
           </View>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

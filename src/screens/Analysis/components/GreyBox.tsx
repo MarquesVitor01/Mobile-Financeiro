@@ -1,17 +1,16 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
-
-type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
-
-interface TransactionItem {
-  icon: FeatherIconName;
-  label: string;
-  time: string;
-  category: string;
-  value: string;
-  iconColor: string;
-}
+import { db } from "@/src/config/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+import { useUser } from "@/src/context/UserContext";
 
 interface WeekData {
   week: string;
@@ -19,72 +18,140 @@ interface WeekData {
   expense: number;
 }
 
-const monthData: Record<string, WeekData[]> = {
-  Abril: [
-    { week: "Semana 1", income: 1200, expense: 800 },
-    { week: "Semana 2", income: 1500, expense: 900 },
-    { week: "Semana 3", income: 1800, expense: 1200 },
-    { week: "Semana 4", income: 2000, expense: 1100 },
-  ],
-  Maio: [
-    { week: "Semana 1", income: 1000, expense: 700 },
-    { week: "Semana 2", income: 1300, expense: 850 },
-    { week: "Semana 3", income: 1600, expense: 950 },
-    { week: "Semana 4", income: 1900, expense: 1050 },
-  ],
-  Junho: [
-    { week: "Semana 1", income: 1400, expense: 750 },
-    { week: "Semana 2", income: 1700, expense: 880 },
-    { week: "Semana 3", income: 2000, expense: 1000 },
-    { week: "Semana 4", income: 2300, expense: 1150 },
-  ],
-};
+interface ItemData {
+  id: string;
+  label: string;
+  category: string;
+  value: string;
+  icon: string;
+  iconColor: string;
+  time: string;
+  mes: string;
+}
+
+const validFeatherIcons = new Set([
+  "dollar-sign",
+  "shopping-cart",
+  "home",
+  "calendar",
+  "credit-card",
+  "briefcase",
+  "book",
+  "coffee",
+  "gift",
+  "tag",
+]);
 
 export default function GreyBox() {
-  const [selectedMonth, setSelectedMonth] = useState<string>("Abril");
+  const { user } = useUser();
+  const [monthData, setMonthData] = useState<Record<string, WeekData[]>>({});
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  
-  const transactions: TransactionItem[] = [
-    {
-      icon: "credit-card",
-      label: "Salary",
-      time: "18:27 - April 30",
-      category: "Monthly",
-      value: "$4.000,00",
-      iconColor: "#6C63FF",
-    },
-    {
-      icon: "shopping-cart",
-      label: "Groceries",
-      time: "17:00 - April 24",
-      category: "Pantry",
-      value: "-$100,00",
-      iconColor: "#29ABE2",
-    },
-    {
-      icon: "home",
-      label: "Rent",
-      time: "8:30 - April 15",
-      category: "Rent",
-      value: "-$674,40",
-      iconColor: "#1C92D2",
-    },
-  ];
+  const [filteredItems, setFilteredItems] = useState<ItemData[]>([]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user) {
+          console.log("Usuário não logado.");
+          return;
+        }
+
+        const querySnapshot = await getDocs(collection(db, "financeiro"));
+        const transactions: any[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+
+          if (data.userId !== user.id) return;
+
+          const date = new Date(data.data.seconds * 1000);
+          const mes = date.toLocaleString("pt-BR", { month: "long" });
+
+          transactions.push({
+            ...data,
+            valor: data.valor / 100,
+            date,
+            mes,
+            semana: `Semana ${Math.ceil(date.getDate() / 7)}`,
+            label: data.nome || "Sem título",
+            category: data.categoria || "Outros",
+            value: `R$${(data.valor / 100).toFixed(2)}`,
+            icon: validFeatherIcons.has(data.icon) ? data.icon : "dollar-sign",
+            iconColor: data.setor === "entrada" ? "#00D09E" : "#FF6B6B",
+            time: date.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          });
+        });
+
+        const grouped: Record<
+          string,
+          Record<string, { income: number; expense: number }>
+        > = {};
+
+        transactions.forEach((t) => {
+          const mes = t.mes.charAt(0).toUpperCase() + t.mes.slice(1);
+          const semana = t.semana;
+
+          if (!grouped[mes]) grouped[mes] = {};
+          if (!grouped[mes][semana])
+            grouped[mes][semana] = { income: 0, expense: 0 };
+
+          if (t.setor === "entrada") grouped[mes][semana].income += t.valor;
+          if (t.setor === "saida") grouped[mes][semana].expense += t.valor;
+        });
+
+        const formattedData: Record<string, WeekData[]> = {};
+
+        Object.entries(grouped).forEach(([mes, semanas]) => {
+          formattedData[mes] = Object.entries(semanas).map(
+            ([week, values]) => ({
+              week,
+              income: values.income,
+              expense: values.expense,
+            })
+          );
+        });
+
+        const mesesDisponiveis = Object.keys(formattedData);
+        setMonthData(formattedData);
+        setSelectedMonth(mesesDisponiveis[0] || "");
+
+        setFilteredItems(transactions);
+      } catch (error) {
+        console.error("Erro ao buscar dados do Firebase:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   const fillIncome = "#00D09E";
   const fillExpense = "#FF6B6B";
-  const weeklyData = monthData[selectedMonth] || [];
 
+  const weeklyData = monthData[selectedMonth] || [];
   const maxValue = Math.max(
-    ...weeklyData.map(item => Math.max(item.income, item.expense))
+    ...weeklyData.flatMap((item) => [item.income, item.expense, 1])
   );
+  const [tooltip, setTooltip] = useState<{
+    index: number;
+    type: "income" | "expense";
+  } | null>(null);
+
+  const itemsDoMesSelecionado = filteredItems.filter((item) => {
+    return item.mes.toLowerCase() === selectedMonth.toLowerCase();
+  });
 
   return (
     <View style={styles.containerBox}>
       <View style={styles.grafico}>
         <View style={styles.header}>
-          <Text style={styles.chartTitle}>Entradas e Saídas - {selectedMonth}</Text>
-          <TouchableOpacity 
+          <Text style={styles.chartTitle}>
+            Entradas e Saídas - {selectedMonth}
+          </Text>
+          <TouchableOpacity
             onPress={() => setShowMonthPicker(true)}
             style={styles.monthButton}
           >
@@ -122,26 +189,52 @@ export default function GreyBox() {
           </View>
         </Modal>
 
-        {/* Gráfico de barras personalizado */}
         <View style={styles.chartContainer}>
           {weeklyData.map((week, index) => (
             <View key={index} style={styles.weekContainer}>
               <Text style={styles.weekLabel}>{week.week}</Text>
               <View style={styles.barsContainer}>
-                <View style={[
-                  styles.bar, 
-                  styles.incomeBar, 
-                  { height: (week.income / maxValue) * 150 } // 150 é a altura máxima
-                ]}>
-                  <Text style={styles.barValue}>${week.income}</Text>
-                </View>
-                <View style={[
-                  styles.bar, 
-                  styles.expenseBar, 
-                  { height: (week.expense / maxValue) * 150 }
-                ]}>
-                  <Text style={styles.barValue}>${week.expense}</Text>
-                </View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setTooltip({ index, type: "income" })}
+                  style={{ alignItems: "center" }}
+                >
+                  {tooltip?.index === index && tooltip?.type === "income" && (
+                    <View style={styles.tooltip}>
+                      <Text style={styles.tooltipText}>
+                        R${week.income.toFixed(0)}
+                      </Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.bar,
+                      styles.incomeBar,
+                      { height: (week.income / maxValue) * 150 },
+                    ]}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setTooltip({ index, type: "expense" })}
+                  style={{ alignItems: "center" }}
+                >
+                  {tooltip?.index === index && tooltip?.type === "expense" && (
+                    <View style={styles.tooltip}>
+                      <Text style={styles.tooltipText}>
+                        R${week.expense.toFixed(0)}
+                      </Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.bar,
+                      styles.expenseBar,
+                      { height: (week.expense / maxValue) * 150 },
+                    ]}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -149,21 +242,29 @@ export default function GreyBox() {
 
         <View style={styles.legendContainer}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: fillIncome }]} />
+            <View
+              style={[styles.legendColor, { backgroundColor: fillIncome }]}
+            />
             <Text style={styles.legendText}>Entradas</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: fillExpense }]} />
+            <View
+              style={[styles.legendColor, { backgroundColor: fillExpense }]}
+            />
             <Text style={styles.legendText}>Saídas</Text>
           </View>
         </View>
       </View>
-
-      <View style={styles.transactions}>
-        {transactions.map((item, index) => (
-          <View key={index} style={styles.item}>
-            <View style={[styles.iconCircleItem, { backgroundColor: item.iconColor }]}>
-              <Feather name={item.icon} size={16} color="#fff" />
+      <ScrollView>
+        {itemsDoMesSelecionado.map((item) => (
+          <View key={item.id} style={styles.item}>
+            <View
+              style={[
+                styles.iconCircleItem,
+                { backgroundColor: item.iconColor },
+              ]}
+            >
+              <Feather name={item.icon as any} size={16} color="#fff" />
             </View>
             <View style={styles.itemContent}>
               <Text style={styles.itemLabel}>{item.label}</Text>
@@ -171,16 +272,11 @@ export default function GreyBox() {
             </View>
             <View style={styles.itemCategory}>
               <Text style={styles.itemType}>{item.category}</Text>
-              <Text style={[
-                styles.itemValue, 
-                item.value.startsWith("-") ? styles.expenseValue : styles.incomeValue
-              ]}>
-                {item.value}
-              </Text>
+              <Text style={styles.itemValue}>{item.value}</Text>
             </View>
           </View>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -284,14 +380,6 @@ const styles = StyleSheet.create({
   expenseBar: {
     backgroundColor: "#FF6B6B",
   },
-  barValue: {
-    fontSize: 9,
-    color: "white",
-    marginBottom: 2,
-    transform: [{ rotate: '-90deg' }],
-    width: 40,
-    textAlign: 'center',
-  },
   legendContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -312,33 +400,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#555",
   },
-  transactions: {
-    width: "100%",
+  tooltip: {
+    position: "absolute",
+    bottom: "100%",
+    backgroundColor: "#333",
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 6,
+    zIndex: 10,
+  },
+  tooltipText: {
+    color: "white",
+    fontSize: 10,
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 12,
+    padding: 10,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
     elevation: 2,
   },
   iconCircleItem: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
   },
   itemContent: {
     flex: 1,
-    marginLeft: 10,
   },
   itemLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#222",
+    fontWeight: "600",
+    fontSize: 14,
+    color: "#333",
   },
   itemTime: {
     fontSize: 12,
@@ -349,16 +451,11 @@ const styles = StyleSheet.create({
   },
   itemType: {
     fontSize: 12,
-    color: "#666",
+    color: "#888",
   },
   itemValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
-  },
-  incomeValue: {
-    color: "#00D09E",
-  },
-  expenseValue: {
-    color: "#FF6B6B",
+    color: "#333",
   },
 });

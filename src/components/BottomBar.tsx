@@ -4,14 +4,13 @@ import { View, TouchableOpacity, StyleSheet, Text } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-// Lista de rotas válidas
 const items = [
+{ route: "/perfil", icon: "user-circle", label: "Perfil" },
   { route: "/home", icon: "home", label: "Início" },
-  { route: "/notification", icon: "bell", label: "Notificações" },
-  { route: "/account", icon: "folder-open", label: "Projetos" },
+  { route: "/account", icon: "folder-open", label: "Registros" },
   { route: "/analysis", icon: "line-chart", label: "Análises" },
-  { route: "/categories", icon: "th-large", label: "Categorias" },
-  { route: "/perfil", icon: "user-circle", label: "Perfil" },
+  // { route: "/notification", icon: "bell", label: "Notificações" },
+  // { route: "/categories", icon: "th-large", label: "Categorias" },
 ] as const;
 
 type RoutePath = typeof items[number]["route"];

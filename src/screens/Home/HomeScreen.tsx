@@ -1,65 +1,116 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import GreyBox from "./components/GreyBox";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
+import { useRouter } from "expo-router";
+import { AntDesign } from "@expo/vector-icons"; 
+import { Dimensions, SafeAreaView } from "react-native";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/src/config/firebaseConfig";
+import GreyBox from "./components/GreyBox";
+import { useUser } from "@/src/context/UserContext";
+
+const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
-  const totalBalance = 7783.0;
-  const totalExpense = 1187.4;
-  const rawPercentage = (totalExpense / totalBalance) * 100;
-  const expensePercentage = parseFloat(rawPercentage.toFixed(1));
+  const { user } = useUser();
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [expensePercentage, setExpensePercentage] = useState(0);
+  
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user) return;
+
+        const querySnapshot = await getDocs(collection(db, "financeiro"));
+        let totalBalanceTemp = 0;
+        let totalExpenseTemp = 0;
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const valor = data.valor / 100;
+
+          if (data.userId === user.id) {
+            if (data.setor === "entrada") {
+              totalBalanceTemp += valor;
+            } else if (data.setor === "saida") {
+              totalExpenseTemp += valor;
+            }
+          }
+        });
+
+        setTotalBalance(totalBalanceTemp);
+        setTotalExpense(totalExpenseTemp);
+
+        const rawPercentage = (totalExpenseTemp / totalBalanceTemp) * 100;
+        setExpensePercentage(parseFloat(rawPercentage.toFixed(1)));
+      } catch (error) {
+        console.error("Erro ao buscar transações:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user]); 
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Hi, Welcome Back</Text>
-            <Text style={styles.subGreeting}>Good Morning</Text>
-          </View>
-          <View style={styles.icon}>
-            <FontAwesome
-              name="user-circle"
-              size={28}
-              color="#fff"
-              style={styles.profileIcon}
-            />
-          </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Olá, Seja Bem Vindo</Text>
+          <Text style={styles.subGreeting}>{user?.nome}</Text>
         </View>
+        <View style={styles.icon}>
+          <FontAwesome
+            name="user-circle"
+            size={28}
+            color="#fff"
+            style={styles.profileIcon}
+          />
+        </View>
+      </View>
 
-        <View style={styles.balanceBox}>
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>💰 Total Balance</Text>
-            <Text style={styles.expenseLabel}>💸 Total Expense</Text>
-          </View>
-          <View style={styles.balanceRow}>
-            <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)}</Text>
-            <Text style={styles.expenseAmount}>
-              - ${totalExpense.toFixed(2)}
-            </Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.progressBarContainer}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${expensePercentage}%` as `${number}%` },
-              ]}
-            />
-          </View>
-          <Text style={styles.progressText}>
-            {expensePercentage}% of your expenses.{" "}
-            {expensePercentage < 50 ? "Looks Good." : "Be careful!"}
+      <View style={styles.balanceBox}>
+        <View style={styles.balanceRow}>
+          <Text style={styles.balanceLabel}>💰 Valor de Entrada</Text>
+          <Text style={styles.expenseLabel}>💸 Valor de Saída</Text>
+        </View>
+        <View style={styles.balanceRow}>
+          <Text style={styles.balanceAmount}>R$ {totalBalance.toFixed(2).replace(".", ",")}</Text>
+          <Text style={styles.expenseAmount}>
+            - R$ {totalExpense.toFixed(2).replace(".", ",")}
           </Text>
         </View>
 
-        <GreyBox />
-      </ScrollView>
-      <BottomBar/>
-    </View>
+        <View style={styles.divider} />
+
+        <View style={styles.progressBarContainer}>
+          <View
+            style={[styles.progressBarFill, { width: `${expensePercentage}%` as `${number}%` }]}
+          />
+        </View>
+        <Text style={styles.progressText}>
+          {expensePercentage}% of your expenses.{" "}
+          {expensePercentage < 50 ? "Looks Good." : "Be careful!"}
+        </Text>
+      </View>
+
+      <GreyBox 
+        totalBalance={totalBalance}
+        totalExpense={totalExpense}
+      />
+      
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => router.push("/add")}
+      >
+        <AntDesign name="pluscircle" size={60} color="#000" />
+      </TouchableOpacity>
+
+      <BottomBar />
+    </SafeAreaView>
   );
 }
 
@@ -70,7 +121,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: width * 0.05,
     paddingVertical: 30,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -91,7 +142,7 @@ const styles = StyleSheet.create({
   },
   balanceBox: {
     marginTop: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: width * 0.05,
   },
   balanceRow: {
     flexDirection: "row",
@@ -139,5 +190,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#ffffff60",
     marginVertical: 10,
+  },
+  floatingButton: {
+    position: "absolute",
+    bottom: 120,
+    right: width * 0.05,
+    zIndex: 10,
   },
 });

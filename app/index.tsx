@@ -18,9 +18,9 @@ export default function Index() {
       }),
       Animated.timing(bgColorAnim, {
         toValue: 1,
-        duration: 2000, // aumento da duração para transição mais suave
-        easing: Easing.inOut(Easing.ease), // curva de animação mais suave
-        useNativeDriver: false, // cor não é animada via native driver
+        duration: 2000, 
+        easing: Easing.inOut(Easing.ease), 
+        useNativeDriver: false, 
       }),
     ]).start(() => {
       setShowLaunch(true);
@@ -35,7 +35,7 @@ export default function Index() {
 
   const bgColorInterpolate = bgColorAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#00D09E', '#F1FFF3'], // Transição gradual entre as cores
+    outputRange: ['#00D09E', '#F1FFF3'], 
   });
 
   return (

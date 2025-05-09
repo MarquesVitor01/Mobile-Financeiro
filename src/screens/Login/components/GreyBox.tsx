@@ -10,10 +10,24 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../../config/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/src/config/firebaseConfig";
+import { useUser } from "@/src/context/UserContext";
+
+// Tipagem do usuário
+type UserData = {
+  id: any;
+  uid: string;
+  nome: string;
+  email: string;
+  numero: string;
+  dataNascimento: string;
+};
 
 export default function GreyBox() {
   const router = useRouter();
+  const { setUser } = useUser();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +39,33 @@ export default function GreyBox() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const uid = userCredential.user.uid;
+
+      const docRef = doc(db, "usuarios", uid);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        Alert.alert("Erro", "Usuário não encontrado no banco de dados.");
+        return;
+      }
+
+      const dataFromFirestore = docSnap.data();
+
+      const userData: UserData = {
+        id: uid, 
+        uid: uid,
+        nome: dataFromFirestore.nome,
+        email: dataFromFirestore.email,
+        numero: dataFromFirestore.numero,
+        dataNascimento: dataFromFirestore.dataNascimento,
+      };
+
+      setUser(userData);
       router.push("/home");
     } catch (error) {
       console.log("Erro ao logar:", error);
@@ -111,7 +151,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
   },
-
   label: {
     alignSelf: "flex-start",
     marginLeft: 10,

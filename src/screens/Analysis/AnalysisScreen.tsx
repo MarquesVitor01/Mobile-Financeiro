@@ -1,55 +1,95 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import GreyBox from "./components/GreyBox";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
 import { useRouter } from "expo-router";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/src/config/firebaseConfig";
+import GreyBox from "./components/GreyBox";
+import { useUser } from "@/src/context/UserContext";
+
+const categorias = [
+  { nome: "passeio", icone: "car" },
+  { nome: "comida", icone: "cutlery" },
+  { nome: "compras", icone: "book" },
+];
 
 export default function AnalysisScreen() {
-  const totalBalance = 7783.0;
-  const totalExpense = 1187.4;
-  const rawPercentage = (totalExpense / totalBalance) * 100;
-  const expensePercentage = parseFloat(rawPercentage.toFixed(1));
+  const { user } = useUser();
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [categoriaAtual, setCategoriaAtual] = useState(0);
+  const [valorCategoria, setValorCategoria] = useState(0);
 
   const router = useRouter();
 
-  const handleNavigate = (route: string) => {
-    switch (route) {
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      default:
-        console.warn("Rota inválida:", route);
-    }
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        if (!user?.uid) return;
+        
+        const financeiroRef = collection(db, "financeiro");
+        const q = query(financeiroRef, where("userId", "==", user.uid));
+        
+        const querySnapshot = await getDocs(q);
+        const lista: any[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const rawDate = new Date(data.data.seconds * 1000);
+
+          lista.push({
+            ...data,
+            valor: data.valor / 100,
+            rawDate,
+          });
+        });
+
+        setTransactions(lista);
+      } catch (error) {
+        console.error("Erro ao buscar transações:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user]);
+
+  useEffect(() => {
+    const categoria = categorias[categoriaAtual].nome;
+    const total = transactions
+      .filter((item) => item.setor === "saida" && item.gasto === categoria)
+      .reduce((acc, curr) => acc + curr.valor, 0);
+
+    setValorCategoria(total);
+  }, [categoriaAtual, transactions]);
+
+  const trocarCategoria = () => {
+    setCategoriaAtual((prev) => (prev + 1) % categorias.length);
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.title}>Account Balance</Text>
-        </View>
+        <Text style={styles.title}>Análises</Text>
         <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
       </View>
 
       <View style={styles.main}>
         <View style={styles.contentRow}>
-          <View style={styles.iconWrapper}>
+          <TouchableOpacity
+            style={styles.iconWrapper}
+            onPress={trocarCategoria}
+          >
             <View style={styles.circleBorder}>
-              <FontAwesome name="car" size={44} color="#fff" />
+              <FontAwesome
+                name={categorias[categoriaAtual].icone as any}
+                size={44}
+                color="#fff"
+              />
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.divider} />
 
@@ -57,27 +97,19 @@ export default function AnalysisScreen() {
             <View style={styles.infoBox}>
               <FontAwesome name="credit-card" size={30} color="#fff" />
               <View style={styles.textContainer}>
-                <Text style={styles.infoTitle}>Total Spent</Text>
-                <Text style={styles.infoSubtitle}>R$ 1.187,40</Text>
-              </View>
-            </View>
-
-            <View style={styles.infoBox}>
-              <MaterialCommunityIcons
-                name="chart-line"
-                size={30}
-                color="#fff"
-              />
-              <View style={styles.textContainer}>
-                <Text style={styles.infoTitle}>Balance Left</Text>
-                <Text style={styles.infoSubtitle}>R$ 6.595,60</Text>
+                <Text style={styles.infoTitle}>
+                  {categorias[categoriaAtual].nome}
+                </Text>
+                <Text style={styles.infoSubtitle}>
+                  R$ {valorCategoria.toFixed(2).replace(".", ",")}
+                </Text>
               </View>
             </View>
           </View>
         </View>
       </View>
       <GreyBox />
-      <BottomBar onPress={handleNavigate} />
+      <BottomBar />
     </View>
   );
 }
@@ -131,7 +163,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 25,
   },
   infoColumn: {
-    justifyContent: "space-between",
+    justifyContent: "center",
     height: 130,
   },
   infoBox: {
@@ -156,5 +188,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.8,
   },
-  
 });

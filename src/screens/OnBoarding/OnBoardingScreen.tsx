@@ -4,23 +4,22 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
 import NextBox from "./components/NextBox";
-
+import { Dimensions } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 const slides = [
   {
     key: "1",
-    title: "Welcome to\nExpense Manager",
+    title: "Organização Fincanceira.",
     image: require("../../../assets/images/background01.png"),
   },
   {
     key: "2",
-    title: "Track your\nSpending Easily",
+    title: "Seu dinheiro sob controle",
     image: require("../../../assets/images/background02.png"),
   },
 ];
@@ -31,7 +30,10 @@ export default function OnBoardingScreen() {
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const index = Math.round(event.nativeEvent.contentOffset.x / width);
+      const index = Math.round(
+        event.nativeEvent.contentOffset.x /
+          event.nativeEvent.layoutMeasurement.width
+      );
       setCurrentIndex(index);
     },
     []
@@ -44,17 +46,19 @@ export default function OnBoardingScreen() {
   }, [currentIndex]);
 
   const renderItem = ({ item }: any) => (
-    <View style={[styles.slide, { width, height }]}>
+    <View style={styles.slide}>
       <View style={styles.titleContainer}>
         <Text style={styles.titleText}>{item.title}</Text>
       </View>
-      <NextBox
-        image={item.image}
-        onNext={handleNext}
-        showDots
-        currentIndex={currentIndex}
-        total={slides.length}
-      />
+      <View style={styles.nextBoxContainer}>
+        <NextBox
+          image={item.image}
+          onNext={handleNext}
+          showDots
+          currentIndex={currentIndex}
+          total={slides.length}
+        />
+      </View>
     </View>
   );
 
@@ -70,18 +74,19 @@ export default function OnBoardingScreen() {
       bounces={false}
       onScroll={handleScroll}
       scrollEventThrottle={16}
+      contentContainerStyle={{ flexGrow: 1 }}
     />
   );
 }
 
 const styles = StyleSheet.create({
   slide: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
     backgroundColor: "#00D09E",
-    flex: 1,
   },
   titleContainer: {
-    paddingTop: 100,
-    paddingBottom: 20,
+    marginTop: 50,
     paddingHorizontal: 40,
   },
   titleText: {
@@ -91,5 +96,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 39,
     color: "#fff",
+    paddingBlock: 20
+  },
+  nextBoxContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
   },
 });

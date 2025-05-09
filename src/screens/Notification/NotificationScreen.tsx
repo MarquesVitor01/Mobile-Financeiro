@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import GreyBox from "./components/GreyBox";
 import { FontAwesome } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
@@ -29,20 +35,17 @@ export default function NotificationScreen() {
   };
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <FontAwesome name="arrow-left" size={28} color="#fff" />
-          </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <FontAwesome name="arrow-left" size={28} color="#fff" />
+        </TouchableOpacity>
 
-          <Text style={styles.title}>Notification</Text>
+        <Text style={styles.title}>Notification</Text>
 
-          <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
-        </View>
+        <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
+      </View>
 
-        <GreyBox />
-      </ScrollView>
-
+      <GreyBox />
       <BottomBar onPress={handleNavigate} />
     </View>
   );
