@@ -6,10 +6,10 @@ import {
   ReactNode,
 } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../config/firebaseConfig"; // ajuste o caminho
+import { auth } from "../config/firebaseConfig";
 
 type UserData = {
-  id: string; // <- use o mesmo valor do uid aqui, para compatibilidade
+  id: string;
   uid: string;
   nome: string;
   email: string;
@@ -20,34 +20,37 @@ type UserData = {
 type UserContextType = {
   user: UserData | null;
   setUser: (user: UserData | null) => void;
+  loading: boolean;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser({
-          id: firebaseUser.uid, // <- define corretamente aqui
+          id: firebaseUser.uid,
           uid: firebaseUser.uid,
           nome: firebaseUser.displayName ?? "",
           email: firebaseUser.email ?? "",
-          numero: "", // você pode preencher isso de outra fonte, como o Firestore
-          dataNascimento: "", // idem acima
+          numero: "",
+          dataNascimento: "",
         });
       } else {
         setUser(null);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, loading }}>
       {children}
     </UserContext.Provider>
   );

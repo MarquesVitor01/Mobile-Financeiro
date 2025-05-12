@@ -53,7 +53,7 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
       try {
         if (!user) {
           console.log("Usuário não logado.");
-          return; // Se não houver usuário, não busca as transações
+          return;
         }
 
         const querySnapshot = await getDocs(collection(db, "financeiro"));
@@ -64,7 +64,6 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
           const rawDate = new Date(data.data.seconds * 1000);
           const valor = data.valor / 100;
 
-          // Verifique se o userId é igual ao id do usuário logado
           if (data.userId === user.id) {
             allTransactions.push({
               icon:

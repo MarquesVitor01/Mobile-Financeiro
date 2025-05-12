@@ -111,9 +111,9 @@ export default function GreyBox() {
         <Text style={styles.loginText}>Log In</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity>
+      {/* <TouchableOpacity>
         <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <TouchableOpacity style={styles.signUpButton}>
         <Text style={styles.signUpText}>Sign Up</Text>
@@ -127,10 +127,10 @@ export default function GreyBox() {
         Para Acessar
       </Text>
 
-      <View style={styles.socialContainer}>
+      {/* <View style={styles.socialContainer}>
         <FontAwesome name="facebook-square" size={30} color="#4267B2" />
         <FontAwesome name="google" size={30} color="#DB4437" />
-      </View>
+      </View> */}
 
       <Text style={styles.bottomText}>
         Não Possui Uma Conta?{" "}
