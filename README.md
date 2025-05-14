@@ -1,53 +1,30 @@
-# Welcome to your Expo app 👋
+# 🏛App Controlador Financeiro💰
+O **App Controlador Financeiro** é uma aplicação desenvolvida em **React Native** que auxilia usuários no gerenciamento de suas finanças. 
+Projeto para apresentação do ExpoTech e demonstrar funcionalidades como rastreamento de despesas, geração de relatórios e categorização de gastos.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 📂 Estrutura do Projeto
+O projeto está organizado da seguinte forma:
 
-# Link do Video do Teste 
+├── TestBaze │ 
+├── app │ <br>
+├── assets │<br>
+├── components │<br>
+├── constants │ <br>
+├── hooks │ <br>
+├── scripts │<br>
+├── src │<br>
+
+## 🎯 Ações e Entregáveis
+O projeto apresenta um sistema funcional para controle financeiro, incluindo autenticação, registro de transações e geração de relatórios financeiros personalizados.
+
+# Link do Video do Teste 🎬
 ## https://drive.google.com/file/d/1UVrdIlj5QCNLmow0Y54hpomjHpplTare/view?usp=sharing
 
-## Get started
+#### ❌**Problemas Encontrados**
+- **Erro no login:** Em alguns casos, usuários enfrentaram dificuldades ao realizar o login devido à instabilidade no armazenamento de credenciais.
+- **Integração com API:** Foi necessário ajuste nas chamadas assíncronas para evitar falhas na sincronização de dados.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+#### ✅**Melhorias Aplicadas**
+- Implementação de um **cache** no armazenamento de credenciais para melhorar a estabilidade do login.
+- Otimização das chamadas à API utilizando **Axios com interceptors** para melhor controle de requisições.
+- Adição de novos **testes unitários** na pasta `TestBaze`, garantindo maior confiabilidade nas funcionalidades essenciais.
