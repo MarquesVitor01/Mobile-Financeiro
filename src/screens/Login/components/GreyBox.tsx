@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, Alert, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useUser } from "@/src/context/UserContext";
@@ -23,7 +31,11 @@ export default function GreyBox() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const uid = userCredential.user.uid;
       const userData = await fetchUserData(uid);
 
@@ -41,12 +53,27 @@ export default function GreyBox() {
   };
 
   return (
-    <View style={styles.container}>
-      <Input label="E-mail" value={email} onChangeText={setEmail} keyboardType="email-address" />
-      <PasswordInput label="Senha" value={password} onChangeText={setPassword} />
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+    >
+      <Input
+        label="E-mail"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+      />
+      <PasswordInput
+        label="Senha"
+        value={password}
+        onChangeText={setPassword}
+      />
       <PrimaryButton label="Log In" onPress={handleLogin} />
 
-      <TouchableOpacity style={styles.signUpButton} onPress={() => router.push("/onBoarding")}>
+      <TouchableOpacity
+        style={styles.signUpButton}
+        onPress={() => router.push("/onBoarding")}
+      >
         <Text style={styles.signUpText}>Sign Up</Text>
       </TouchableOpacity>
 
@@ -56,10 +83,11 @@ export default function GreyBox() {
 
       <TouchableOpacity onPress={() => router.push("/onBoarding")}>
         <Text style={styles.bottomText}>
-          Não Possui Uma Conta? <Text style={styles.highlight}>Criar Conta</Text>
+          Não Possui Uma Conta?{" "}
+          <Text style={styles.highlight}>Criar Conta</Text>
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -68,11 +96,14 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     backgroundColor: "#F1FFF3",
-    alignItems: "center",
-    justifyContent: "center",
+    paddingTop: 70,
     padding: 24,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
+  },
+  contentContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontSize: 28,

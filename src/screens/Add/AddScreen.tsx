@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import GreyBox from "./components/GreyBox";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#00D09E",
-    paddingTop: 60,
+    paddingTop: 40,
   },
   header: {
     paddingHorizontal: 20,

@@ -139,143 +139,150 @@ export default function GreyBox() {
 
   return (
     <View style={styles.container}>
-      {/* Gráfico */}
-      <View style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Entradas e Saídas - {selectedMonth}</Text>
-          <TouchableOpacity
-            onPress={() => setShowMonthPicker(true)}
-            style={styles.monthButton}
-          >
-            <Feather name="calendar" size={20} color="#00D09E" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Modal de meses */}
-        <Modal
-          visible={showMonthPicker}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowMonthPicker(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              {Object.keys(monthData).map((month) => (
-                <TouchableOpacity
-                  key={month}
-                  style={styles.monthOption}
-                  onPress={() => {
-                    setSelectedMonth(month);
-                    setShowMonthPicker(false);
-                  }}
-                >
-                  <Text style={styles.monthOptionText}>{month}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowMonthPicker(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 30 }}
+      >
+        <View style={styles.card}>
+          <View style={styles.header}>
+            <Text style={styles.title}>
+              Entradas e Saídas - {selectedMonth}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowMonthPicker(true)}
+              style={styles.monthButton}
+            >
+              <Feather name="calendar" size={20} color="#00D09E" />
+            </TouchableOpacity>
           </View>
-        </Modal>
 
-        <View style={styles.chart}>
-          {weeklyData.map((week, index) => (
-            <View key={index} style={styles.week}>
-              <Text style={styles.weekLabel}>{week.week}</Text>
-              <View style={styles.bars}>
+          <Modal
+            visible={showMonthPicker}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowMonthPicker(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                {Object.keys(monthData).map((month) => (
+                  <TouchableOpacity
+                    key={month}
+                    style={styles.monthOption}
+                    onPress={() => {
+                      setSelectedMonth(month);
+                      setShowMonthPicker(false);
+                    }}
+                  >
+                    <Text style={styles.monthOptionText}>{month}</Text>
+                  </TouchableOpacity>
+                ))}
                 <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setTooltip({ index, type: "income" })}
+                  style={styles.cancelButton}
+                  onPress={() => setShowMonthPicker(false)}
                 >
-                  {tooltip?.index === index && tooltip?.type === "income" && (
-                    <View style={styles.tooltip}>
-                      <Text style={styles.tooltipText}>
-                        R${week.income.toFixed(0)}
-                      </Text>
-                    </View>
-                  )}
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        backgroundColor: fillIncome,
-                        height: (week.income / maxValue) * 120,
-                      },
-                    ]}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setTooltip({ index, type: "expense" })}
-                >
-                  {tooltip?.index === index && tooltip?.type === "expense" && (
-                    <View style={styles.tooltip}>
-                      <Text style={styles.tooltipText}>
-                        R${week.expense.toFixed(0)}
-                      </Text>
-                    </View>
-                  )}
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        backgroundColor: fillExpense,
-                        height: (week.expense / maxValue) * 120,
-                      },
-                    ]}
-                  />
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          ))}
+          </Modal>
+
+          <View style={styles.chart}>
+            {weeklyData.map((week, index) => (
+              <View key={`${week.week}-${index}`} style={styles.week}>
+                <Text style={styles.weekLabel}>{week.week}</Text>
+                <View style={styles.bars}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setTooltip({ index, type: "income" })}
+                  >
+                    {tooltip?.index === index && tooltip?.type === "income" && (
+                      <View style={styles.tooltip}>
+                        <Text style={styles.tooltipText}>
+                          R${week.income.toFixed(0)}
+                        </Text>
+                      </View>
+                    )}
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          backgroundColor: fillIncome,
+                          height: (week.income / maxValue) * 120,
+                        },
+                      ]}
+                    />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setTooltip({ index, type: "expense" })}
+                  >
+                    {tooltip?.index === index &&
+                      tooltip?.type === "expense" && (
+                        <View style={styles.tooltip}>
+                          <Text style={styles.tooltipText}>
+                            R${week.expense.toFixed(0)}
+                          </Text>
+                        </View>
+                      )}
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          backgroundColor: fillExpense,
+                          height: (week.expense / maxValue) * 120,
+                        },
+                      ]}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.legend}>
+            <View style={styles.legendItem}>
+              <View
+                style={[styles.legendDot, { backgroundColor: fillIncome }]}
+              />
+              <Text>Entradas</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View
+                style={[styles.legendDot, { backgroundColor: fillExpense }]}
+              />
+              <Text>Saídas</Text>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: fillIncome }]} />
-            <Text>Entradas</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View
-              style={[styles.legendDot, { backgroundColor: fillExpense }]}
-            />
-            <Text>Saídas</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Lista de itens */}
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {itemsDoMesSelecionado.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            activeOpacity={0.8}
-            style={styles.item}
-          >
-            <View
-              style={[styles.iconCircle, { backgroundColor: item.iconColor }]}
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {itemsDoMesSelecionado.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              activeOpacity={0.8}
+              style={styles.item}
             >
-              <Feather name={item.icon as any} size={18} color="#fff" />
-            </View>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemLabel}>{item.label}</Text>
-              <Text style={styles.itemTime}>{item.time}</Text>
-            </View>
-            <View style={styles.itemCategory}>
-              <Text style={styles.itemType}>{item.category}</Text>
-              <Text style={styles.itemValue}>{item.value}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View
+                style={[styles.iconCircle, { backgroundColor: item.iconColor }]}
+              >
+                <Feather name={item.icon as any} size={18} color="#fff" />
+              </View>
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemLabel}>{item.label}</Text>
+                <Text style={styles.itemTime}>{item.time}</Text>
+              </View>
+              <View style={styles.itemCategory}>
+                <Text style={styles.itemType}>{item.category}</Text>
+                <Text style={styles.itemValue}>{item.value}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </ScrollView>
     </View>
   );
@@ -315,7 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    height: 150,
+    height: 120,
     marginTop: 10,
   },
   week: {
@@ -332,7 +339,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   bar: {
-    width: 12,
+    width: 15,
     borderRadius: 4,
     marginHorizontal: 2,
   },
@@ -409,11 +416,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   iconCircle: {
     width: 40,
@@ -444,7 +446,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-    itemInfo: {
+  itemInfo: {
     flex: 1,
   },
 });

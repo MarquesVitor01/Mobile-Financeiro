@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -69,7 +70,11 @@ export default function GreyBox() {
   };
 
   return (
-    <View style={styles.containerBox}>
+    <ScrollView
+      style={styles.containerBox}
+      contentContainerStyle={styles.contentContainer}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.label}>Nome Completo</Text>
       <TextInput
         style={styles.input}
@@ -78,7 +83,6 @@ export default function GreyBox() {
         value={nome}
         onChangeText={setNome}
       />
-
       <Text style={styles.label}>Email</Text>
       <TextInput
         style={styles.input}
@@ -89,7 +93,6 @@ export default function GreyBox() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-
       <Text style={styles.label}>Número</Text>
       <TextInput
         style={styles.input}
@@ -99,7 +102,6 @@ export default function GreyBox() {
         onChangeText={setNumero}
         keyboardType="phone-pad"
       />
-
       <Text style={styles.label}>Data de Nascimento</Text>
       <TextInput
         style={styles.input}
@@ -110,7 +112,6 @@ export default function GreyBox() {
         keyboardType="numeric"
         maxLength={10}
       />
-
       <Text style={styles.label}>Senha</Text>
       <View style={styles.passwordContainer}>
         <TextInput
@@ -122,7 +123,6 @@ export default function GreyBox() {
         />
         <FontAwesome name="eye" size={20} color="#555" style={styles.eyeIcon} />
       </View>
-
       <Text style={styles.label}>Confirmar Senha</Text>
       <View style={styles.passwordContainer}>
         <TextInput
@@ -134,19 +134,16 @@ export default function GreyBox() {
         />
         <FontAwesome name="eye" size={20} color="#555" style={styles.eyeIcon} />
       </View>
-
       <Text style={styles.fingerprintText}>By continuing, you agree to</Text>
-
       <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
         <Text style={styles.loginText}>Criar Conta</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push("/login")}>
         <Text style={styles.bottomText}>
-          Já possui uma conta?{" "}
-          <Text style={{ color: "#00D09E" }}>Entrar</Text>
+          Já possui uma conta? <Text style={{ color: "#00D09E" }}>Entrar</Text>
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -155,11 +152,14 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     backgroundColor: "#F1FFF3",
-    alignItems: "center",
-    justifyContent: "center",
     padding: 20,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
+  },
+  contentContainer: {
+    flexGrow: 1, // para preencher a tela e permitir scroll
+    alignItems: "center",
+    justifyContent: "center",
   },
   label: {
     alignSelf: "flex-start",

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  ScrollView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { db } from "@/src/config/firebaseConfig";
@@ -190,190 +191,197 @@ export default function GreyBox() {
 
   return (
     <View style={styles.containerBox}>
-      {/* Modal para gerenciar categorias */}
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalCategoriasVisible}
-        onRequestClose={() => setModalCategoriasVisible(false)}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 30 }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Gerenciar Categorias</Text>
+        {/* Modal para gerenciar categorias */}
+        <Modal
+          animationType="slide"
+          transparent
+          visible={modalCategoriasVisible}
+          onRequestClose={() => setModalCategoriasVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Gerenciar Categorias</Text>
 
-            <FlatList
-              data={categorias}
-              keyExtractor={(item) => item}
-              style={{ maxHeight: 200, marginBottom: 10 }}
-              renderItem={({ item }) => (
-                <View style={styles.categoriaItem}>
-                  <Text style={styles.categoriaNome}>{item}</Text>
-                  {!categoriasPadrao.includes(item) && (
-                    <TouchableOpacity
-                      style={styles.btnExcluir}
-                      onPress={() => pedirExcluirCategoria(item)}
-                    >
-                      <Text style={styles.textExcluir}>Excluir</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-            />
+              <FlatList
+                data={categorias}
+                keyExtractor={(item) => item}
+                style={{ maxHeight: 200, marginBottom: 10 }}
+                renderItem={({ item }) => (
+                  <View style={styles.categoriaItem}>
+                    <Text style={styles.categoriaNome}>{item}</Text>
+                    {!categoriasPadrao.includes(item) && (
+                      <TouchableOpacity
+                        style={styles.btnExcluir}
+                        onPress={() => pedirExcluirCategoria(item)}
+                      >
+                        <Text style={styles.textExcluir}>Excluir</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              />
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Nova categoria"
-              placeholderTextColor="#666"
-              value={novaCategoria}
-              onChangeText={setNovaCategoria}
-              autoFocus
-            />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nova categoria"
+                placeholderTextColor="#666"
+                value={novaCategoria}
+                onChangeText={setNovaCategoria}
+                autoFocus
+              />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
-                onPress={() => setModalCategoriasVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Fechar</Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#ccc" }]}
+                  onPress={() => setModalCategoriasVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Fechar</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#00D09E" }]}
-                onPress={adicionarCategoria}
-              >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
-                  Adicionar
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#00D09E" }]}
+                  onPress={adicionarCategoria}
+                >
+                  <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                    Adicionar
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Modal de confirmação de exclusão */}
-      <Modal
-        animationType="fade"
-        transparent
-        visible={modalExcluirVisible}
-        onRequestClose={() => setModalExcluirVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { maxWidth: 300 }]}>
-            <Text style={styles.modalTitle}>Confirmar exclusão</Text>
-            <Text style={{ marginVertical: 20, fontSize: 16 }}>
-              Deseja remover a categoria{" "}
-              <Text style={{ fontWeight: "bold" }}>{categoriaParaExcluir}</Text>
-              ?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
-                onPress={() => setModalExcluirVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#FF4C4C" }]}
-                onPress={excluirCategoria}
-              >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
-                  Excluir
+        {/* Modal de confirmação de exclusão */}
+        <Modal
+          animationType="fade"
+          transparent
+          visible={modalExcluirVisible}
+          onRequestClose={() => setModalExcluirVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContainer, { maxWidth: 300 }]}>
+              <Text style={styles.modalTitle}>Confirmar exclusão</Text>
+              <Text style={{ marginVertical: 20, fontSize: 16 }}>
+                Deseja remover a categoria{" "}
+                <Text style={{ fontWeight: "bold" }}>
+                  {categoriaParaExcluir}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Formulário */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Nome do gasto</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite aqui"
-          placeholderTextColor="#888"
-          value={nomeGasto}
-          onChangeText={setNomeGasto}
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Valor</Text>
-        <TextInputMask
-          type={"money"}
-          style={styles.input}
-          placeholder="Digite aqui"
-          placeholderTextColor="#888"
-          value={valor}
-          onChangeText={setValor}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Setor</Text>
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={setor}
-            onValueChange={(itemValue) => setSetor(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Escolha..." value="" />
-            <Picker.Item label="Entrada" value="entrada" />
-            <Picker.Item label="Saída" value="saida" />
-          </Picker>
-        </View>
-      </View>
-
-      {setor === "saida" && (
-        <View style={styles.inputGroup}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 6,
-            }}
-          >
-            <Text style={styles.label}>Gasto</Text>
-            <TouchableOpacity onPress={() => setModalCategoriasVisible(true)}>
-              <Text style={{ color: "#00D09E", fontWeight: "bold" }}>
-                Gerenciar Categorias
+                ?
               </Text>
-            </TouchableOpacity>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#ccc" }]}
+                  onPress={() => setModalExcluirVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#FF4C4C" }]}
+                  onPress={excluirCategoria}
+                >
+                  <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                    Excluir
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
+        </Modal>
 
+        {/* Formulário */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome do gasto</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite aqui"
+            placeholderTextColor="#888"
+            value={nomeGasto}
+            onChangeText={setNomeGasto}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Valor</Text>
+          <TextInputMask
+            type={"money"}
+            style={styles.input}
+            placeholder="Digite aqui"
+            placeholderTextColor="#888"
+            value={valor}
+            onChangeText={setValor}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Setor</Text>
           <View style={styles.pickerWrapper}>
             <Picker
-              selectedValue={gasto}
-              onValueChange={(itemValue) => setGasto(itemValue)}
+              selectedValue={setor}
+              onValueChange={(itemValue) => setSetor(itemValue)}
               style={styles.picker}
             >
               <Picker.Item label="Escolha..." value="" />
-              {categorias.map((cat) => (
-                <Picker.Item key={cat} label={cat} value={cat} />
-              ))}
+              <Picker.Item label="Entrada" value="entrada" />
+              <Picker.Item label="Saída" value="saida" />
             </Picker>
           </View>
         </View>
-      )}
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Descrição</Text>
-        <TextInput
-          style={[styles.input, styles.textarea]}
-          placeholder="Escreva algo..."
-          placeholderTextColor="#888"
-          multiline
-          numberOfLines={4}
-          value={descricao}
-          onChangeText={setDescricao}
-        />
-      </View>
+        {setor === "saida" && (
+          <View style={styles.inputGroup}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
+              }}
+            >
+              <Text style={styles.label}>Gasto</Text>
+              <TouchableOpacity onPress={() => setModalCategoriasVisible(true)}>
+                <Text style={{ color: "#00D09E", fontWeight: "bold" }}>
+                  Gerenciar Categorias
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Salvar</Text>
-      </TouchableOpacity>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={gasto}
+                onValueChange={(itemValue) => setGasto(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Escolha..." value="" />
+                {categorias.map((cat) => (
+                  <Picker.Item key={cat} label={cat} value={cat} />
+                ))}
+              </Picker>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Descrição</Text>
+          <TextInput
+            style={[styles.input, styles.textarea]}
+            placeholder="Escreva algo..."
+            placeholderTextColor="#888"
+            multiline
+            numberOfLines={4}
+            value={descricao}
+            onChangeText={setDescricao}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Salvar</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
@@ -392,6 +400,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
+    paddingBottom: 100
   },
   inputGroup: {
     marginBottom: 20,
@@ -420,10 +429,10 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   pickerWrapper: {
-    backgroundColor: "#E5F7EA", 
+    backgroundColor: "#E5F7EA",
     borderRadius: 16,
     overflow: "hidden",
-    elevation: 3, 
+    elevation: 3,
   },
   picker: {
     height: 50,

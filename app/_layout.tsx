@@ -10,7 +10,7 @@ import { UserProvider, useUser } from "@/src/context/UserContext";
 SplashScreen.preventAutoHideAsync();
 
 function Layout() {
-  const { loading } = useUser(); // garante que esperaremos o contexto
+  const { loading } = useUser(); 
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),

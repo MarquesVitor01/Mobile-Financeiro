@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-} from "react-native";
+import { View, StyleSheet, SafeAreaView, ScrollView, FlatList } from "react-native";
 import HeaderPerfil from "./components/HeaderPerfil";
 import GreyBox from "./components/GreyBox";
 import BottomBar from "@/src/components/BottomBar";
@@ -12,7 +7,6 @@ import { useRouter } from "expo-router";
 
 export default function PerfilScreen() {
   const router = useRouter();
-  
 
   // Pode passar a função para o BottomBar para navegação personalizada
   // const handleNavigate = (route: string) => {
@@ -24,11 +18,14 @@ export default function PerfilScreen() {
     <SafeAreaView style={styles.container}>
       <HeaderPerfil />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <GreyBox />
-      </ScrollView>
+      <FlatList
+        ListHeaderComponent={<GreyBox />}
+        data={[]} // ou outros dados
+        renderItem={null}
+        contentContainerStyle={styles.content}
+      />
 
-      <BottomBar  />
+      <BottomBar />
     </SafeAreaView>
   );
 }
