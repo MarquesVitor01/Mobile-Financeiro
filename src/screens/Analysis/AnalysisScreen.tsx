@@ -26,10 +26,10 @@ export default function AnalysisScreen() {
     const fetchTransactions = async () => {
       try {
         if (!user?.uid) return;
-        
+
         const financeiroRef = collection(db, "financeiro");
         const q = query(financeiroRef, where("userId", "==", user.uid));
-        
+
         const querySnapshot = await getDocs(q);
         const lista: any[] = [];
 
@@ -73,42 +73,39 @@ export default function AnalysisScreen() {
           <FontAwesome name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Análises</Text>
-        <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
+        <TouchableOpacity
+          onPress={() => alert("Em desenvolvimento")}
+          style={styles.iconButton}
+        >
+          <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.main}>
-        <View style={styles.contentRow}>
-          <TouchableOpacity
-            style={styles.iconWrapper}
-            onPress={trocarCategoria}
-          >
-            <View style={styles.circleBorder}>
-              <FontAwesome
-                name={categorias[categoriaAtual].icone as any}
-                size={44}
-                color="#fff"
-              />
-            </View>
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.circleContainer}
+          onPress={trocarCategoria}
+        >
+          <FontAwesome
+            name={categorias[categoriaAtual].icone as any}
+            size={30}
+            color="#fff"
+          />
+          <Text style={styles.categoriaNome}>
+            {categorias[categoriaAtual].nome}
+          </Text>
+        </TouchableOpacity>
 
-          <View style={styles.divider} />
-
-          <View style={styles.infoColumn}>
-            <View style={styles.infoBox}>
-              <FontAwesome name="credit-card" size={30} color="#fff" />
-              <View style={styles.textContainer}>
-                <Text style={styles.infoTitle}>
-                  {categorias[categoriaAtual].nome}
-                </Text>
-                <Text style={styles.infoSubtitle}>
-                  R$ {valorCategoria.toFixed(2).replace(".", ",")}
-                </Text>
-              </View>
-            </View>
-          </View>
+        <View style={styles.valorBox}>
+          <FontAwesome name="credit-card" size={20} color="#fff" />
+          <Text style={styles.valorText}>
+            R$ {valorCategoria.toFixed(2).replace(".", ",")}
+          </Text>
         </View>
       </View>
+
       <GreyBox />
+
       <BottomBar />
     </View>
   );
@@ -118,74 +115,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#00D09E",
-    paddingTop: 10,
+    paddingTop: 40,
+    justifyContent: "space-between",
+  },
+    iconButton: {
+    padding: 8,
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 30,
+    paddingVertical: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     color: "#fff",
     fontWeight: "bold",
-    textAlign: "center",
   },
   main: {
-    paddingBlock: 30,
-  },
-  contentRow: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    marginVertical: 20,
   },
-  iconWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  circleBorder: {
+  circleContainer: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: 60,
     borderWidth: 5,
     borderColor: "#fff",
-    borderStyle: "solid",
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#00B68D",
-  },
-  divider: {
-    width: 1,
-    height: 130,
-    backgroundColor: "#fff",
-    marginHorizontal: 25,
-  },
-  infoColumn: {
     justifyContent: "center",
-    height: 130,
+    alignItems: "center",
+    marginBottom: 20,
   },
-  infoBox: {
+  categoriaNome: {
+    marginTop: 10,
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
+  valorBox: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#00B68D",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 15,
-    width: 180,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
   },
-  textContainer: {
+  valorText: {
     marginLeft: 10,
-  },
-  infoTitle: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-  },
-  infoSubtitle: {
-    color: "#fff",
-    fontSize: 14,
-    opacity: 0.8,
   },
 });

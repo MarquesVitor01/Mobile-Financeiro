@@ -66,13 +66,13 @@ export default function LaunchScreen() {
         </Animated.Text>
 
         <Animated.View style={[styles.buttonsContainer, { opacity: fadeAnim }]}>
-          <Button title="Log In" onPress={handleLogin} />
-          <Button title="Sign Up" onPress={handleSignUp} variant="secondary" />
+          <Button title="Entrar" onPress={handleLogin} />
+          <Button title="Cadastrar-se" onPress={handleSignUp} variant="secondary" />
         </Animated.View>
 
-        <Animated.Text style={[styles.textRecuperar, { opacity: fadeAnim }]}>
+        {/* <Animated.Text style={[styles.textRecuperar, { opacity: fadeAnim }]}>
           Esqueceu a Senha?
-        </Animated.Text>
+        </Animated.Text> */}
       </View>
     </SafeAreaView>
   );

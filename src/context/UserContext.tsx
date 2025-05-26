@@ -1,3 +1,4 @@
+// src/context/UserContext.tsx
 import {
   createContext,
   useContext,
@@ -6,7 +7,8 @@ import {
   ReactNode,
 } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../config/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/src/config/firebaseConfig";
 
 type UserData = {
   id: string;
@@ -25,21 +27,31 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+export const fetchUserData = async (uid: string): Promise<UserData | null> => {
+  const docRef = doc(db, "usuarios", uid);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) return null;
+
+  const data = docSnap.data();
+  return {
+    id: uid,
+    uid,
+    nome: data.nome || "",
+    email: data.email || "",
+    numero: data.numero || "",
+    dataNascimento: data.dataNascimento || "",
+  };
+};
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setUser({
-          id: firebaseUser.uid,
-          uid: firebaseUser.uid,
-          nome: firebaseUser.displayName ?? "",
-          email: firebaseUser.email ?? "",
-          numero: "",
-          dataNascimento: "",
-        });
+        const userData = await fetchUserData(firebaseUser.uid);
+        if (userData) setUser(userData);
       } else {
         setUser(null);
       }

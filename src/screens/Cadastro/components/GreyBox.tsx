@@ -14,7 +14,7 @@ import { auth, db } from "@/src/config/firebaseConfig";
 import { useRouter } from "expo-router";
 
 export default function GreyBox() {
-    const router = useRouter();
+  const router = useRouter();
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -26,8 +26,12 @@ export default function GreyBox() {
   const formatarData = (texto: string) => {
     const numeros = texto.replace(/\D/g, "");
     if (numeros.length <= 2) return numeros;
-    if (numeros.length <= 4) return `${numeros.slice(0, 2)}/${numeros.slice(2)}`;
-    return `${numeros.slice(0, 2)}/${numeros.slice(2, 4)}/${numeros.slice(4, 8)}`;
+    if (numeros.length <= 4)
+      return `${numeros.slice(0, 2)}/${numeros.slice(2)}`;
+    return `${numeros.slice(0, 2)}/${numeros.slice(2, 4)}/${numeros.slice(
+      4,
+      8
+    )}`;
   };
 
   const handleSignUp = async () => {
@@ -136,11 +140,12 @@ export default function GreyBox() {
       <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
         <Text style={styles.loginText}>Criar Conta</Text>
       </TouchableOpacity>
-
-      <Text style={styles.bottomText}>
-        Already have an account?{" "}
-        <Text style={{ color: "#00D09E" }}>Log In</Text>
-      </Text>
+      <TouchableOpacity onPress={() => router.push("/login")}>
+        <Text style={styles.bottomText}>
+          Já possui uma conta?{" "}
+          <Text style={{ color: "#00D09E" }}>Entrar</Text>
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

@@ -1,36 +1,20 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { View, Text, Alert, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "@/src/config/firebaseConfig";
 import { useUser } from "@/src/context/UserContext";
+import { auth } from "@/src/config/firebaseConfig";
+import { fetchUserData } from "@/src/context/UserContext";
 
-// Tipagem do usuário
-type UserData = {
-  id: any;
-  uid: string;
-  nome: string;
-  email: string;
-  numero: string;
-  dataNascimento: string;
-};
+import Input from "./Input";
+import PasswordInput from "./PasswordInput";
+import PrimaryButton from "./PrimaryButton";
 
 export default function GreyBox() {
   const router = useRouter();
   const { setUser } = useUser();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -39,31 +23,14 @@ export default function GreyBox() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
+      const userData = await fetchUserData(uid);
 
-      const docRef = doc(db, "usuarios", uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
+      if (!userData) {
         Alert.alert("Erro", "Usuário não encontrado no banco de dados.");
         return;
       }
-
-      const dataFromFirestore = docSnap.data();
-
-      const userData: UserData = {
-        id: uid, 
-        uid: uid,
-        nome: dataFromFirestore.nome,
-        email: dataFromFirestore.email,
-        numero: dataFromFirestore.numero,
-        dataNascimento: dataFromFirestore.dataNascimento,
-      };
 
       setUser(userData);
       router.push("/home");
@@ -74,138 +41,52 @@ export default function GreyBox() {
   };
 
   return (
-    <View style={styles.containerBox}>
-      <Text style={styles.label}>E-mail</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="example@example.com"
-        placeholderTextColor="#A9A9A9"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+    <View style={styles.container}>
+      <Input label="E-mail" value={email} onChangeText={setEmail} keyboardType="email-address" />
+      <PasswordInput label="Senha" value={password} onChangeText={setPassword} />
+      <PrimaryButton label="Log In" onPress={handleLogin} />
 
-      <Text style={styles.label}>Senha</Text>
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.inputPassword}
-          placeholder="********"
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity
-          onPress={() => setShowPassword(!showPassword)}
-          style={styles.eyeIcon}
-        >
-          <FontAwesome
-            name={showPassword ? "eye-slash" : "eye"}
-            size={20}
-            color="#555"
-          />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginText}>Log In</Text>
-      </TouchableOpacity>
-
-      {/* <TouchableOpacity>
-        <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-      </TouchableOpacity> */}
-
-      <TouchableOpacity style={styles.signUpButton}>
+      <TouchableOpacity style={styles.signUpButton} onPress={() => router.push("/onBoarding")}>
         <Text style={styles.signUpText}>Sign Up</Text>
       </TouchableOpacity>
 
       <Text style={styles.fingerprintText}>
-        Utilize{" "}
-        <Text style={{ color: "#00D09E", fontWeight: "bold" }}>
-          Fingerprint
-        </Text>{" "}
-        Para Acessar
+        Utilize <Text style={styles.highlight}>Fingerprint</Text> Para Acessar
       </Text>
 
-      {/* <View style={styles.socialContainer}>
-        <FontAwesome name="facebook-square" size={30} color="#4267B2" />
-        <FontAwesome name="google" size={30} color="#DB4437" />
-      </View> */}
-
-      <Text style={styles.bottomText}>
-        Não Possui Uma Conta?{" "}
-        <Text style={{ color: "#00D09E" }}>Criar Conta</Text>
-      </Text>
+      <TouchableOpacity onPress={() => router.push("/onBoarding")}>
+        <Text style={styles.bottomText}>
+          Não Possui Uma Conta? <Text style={styles.highlight}>Criar Conta</Text>
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  containerBox: {
+  container: {
     flex: 1,
     width: "100%",
     backgroundColor: "#F1FFF3",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: 24,
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
   },
-  label: {
-    alignSelf: "flex-start",
-    marginLeft: 10,
-    marginBlock: 10,
-    fontWeight: "600",
-    color: "#0E3E3E",
-  },
-  input: {
-    width: "100%",
-    height: 45,
-    backgroundColor: "#E1F3E7",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-  },
-  inputPassword: {
-    flex: 1,
-    height: 45,
-    backgroundColor: "#E1F3E7",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 15,
-  },
-  loginButton: {
-    backgroundColor: "#00D09E",
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    marginTop: 10,
-  },
-  loginText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  forgotText: {
-    color: "#000",
-    marginTop: 10,
-    fontSize: 12,
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1B1B1F",
+    marginBottom: 24,
+    textAlign: "center",
   },
   signUpButton: {
     backgroundColor: "#E1F3E7",
     borderRadius: 25,
     paddingVertical: 10,
     paddingHorizontal: 50,
-    marginTop: 10,
+    marginTop: 16,
   },
   signUpText: {
     fontWeight: "bold",
@@ -213,18 +94,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   fingerprintText: {
-    marginTop: 20,
+    marginTop: 24,
     color: "#333",
     fontSize: 13,
   },
-  socialContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "40%",
-    marginTop: 20,
-  },
   bottomText: {
-    marginTop: 20,
-    fontSize: 12,
+    marginTop: 16,
+    fontSize: 13,
+    textAlign: "center",
+    color: "#333",
+  },
+  highlight: {
+    color: "#00D09E",
+    fontWeight: "bold",
   },
 });

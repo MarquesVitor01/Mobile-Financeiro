@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Linking,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useUser } from "@/src/context/UserContext";
@@ -17,152 +18,223 @@ import { db, auth } from "@/src/config/firebaseConfig";
 import { signOut, sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "expo-router";
 
+const options = [
+  { id: "edit", label: "Editar Nome", icon: "edit" },
+  { id: "security", label: "Segurança", icon: "shield-alt" },
+  { id: "logout", label: "Sair", icon: "sign-out-alt" },
+];
+
 export default function GreyBox() {
   const router = useRouter();
-  const categories = [
-    { id: "1", name: "Editar", icon: "edit" },
-    { id: "2", name: "Segurança", icon: "shield-alt" },
-    { id: "5", name: "Sair", icon: "sign-out-alt" },
-  ];
   const { user, setUser } = useUser();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+
+  const [modalEditVisible, setModalEditVisible] = useState(false);
+  const [modalPasswordVisible, setModalPasswordVisible] = useState(false);
   const [newName, setNewName] = useState(user?.nome || "");
+  const [modalHelpVisible, setModalHelpVisible] = useState(false);
+  const [helpMessage, setHelpMessage] = useState("");
 
   const handleUpdateName = async () => {
     if (!user) return;
 
+    if (newName.trim().length < 3) {
+      Alert.alert("Aviso", "O nome deve ter ao menos 3 caracteres.");
+      return;
+    }
+
     try {
       const userRef = doc(db, "usuarios", user.id);
-      await updateDoc(userRef, { nome: newName });
+      await updateDoc(userRef, { nome: newName.trim() });
 
-      setUser({ ...user, nome: newName });
-      setModalVisible(false);
-    } catch (error) {
+      setUser({ ...user, nome: newName.trim() });
+      setModalEditVisible(false);
+    } catch {
       Alert.alert("Erro", "Não foi possível atualizar o nome.");
     }
   };
 
+  // Envia email para resetar senha
   const handlePasswordReset = async () => {
     if (!user?.email) return;
-    
+
     try {
       await sendPasswordResetEmail(auth, user.email);
       Alert.alert(
         "Email enviado",
-        "Um link para redefinição de senha foi enviado para seu email."
+        "Link para redefinir a senha enviado para seu email."
       );
-      setPasswordModalVisible(false);
-    } catch (error) {
-      Alert.alert(
-        "Erro",
-        "Não foi possível enviar o email de redefinição de senha."
-      );
+      setModalPasswordVisible(false);
+    } catch {
+      Alert.alert("Erro", "Não foi possível enviar o email de redefinição.");
     }
   };
 
-  const handleItemPress = async (itemId: string) => {
-    if (itemId === "1") {
-      setModalVisible(true);
-    } else if (itemId === "2") {
-      setPasswordModalVisible(true);
-    } else if (itemId === "5") {
-      try {
-        await signOut(auth);
-        setUser(null);
-        router.push("/login");
-      } catch (error) {
-        Alert.alert("Erro", "Não foi possível sair da conta.");
-      }
+  // Trata clique nos botões da lista
+  const handleOptionPress = (id: string) => {
+    if (id === "edit") {
+      setModalEditVisible(true);
+    } else if (id === "security") {
+      setModalPasswordVisible(true);
+    } else if (id === "logout") {
+      signOut(auth)
+        .then(() => {
+          setUser(null);
+          router.push("/login");
+        })
+        .catch(() => Alert.alert("Erro", "Não foi possível sair da conta."));
     }
   };
 
-  const renderItem = ({ item }: { item: (typeof categories)[0] }) => (
-    <View style={styles.itemContainer}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={styles.box}
-        onPress={() => handleItemPress(item.id)}
-      >
-        <FontAwesome5 name={item.icon as any} size={28} color="#fff" />
-      </TouchableOpacity>
-      <Text style={styles.label}>{item.name}</Text>
-    </View>
+  const renderItem = ({ item }: { item: (typeof options)[0] }) => (
+    <TouchableOpacity
+      style={styles.optionBox}
+      activeOpacity={0.7}
+      onPress={() => handleOptionPress(item.id)}
+    >
+      <FontAwesome5 name={item.icon as any} size={24} color="#00B07C" />
+      <Text style={styles.optionLabel}>{item.label}</Text>
+    </TouchableOpacity>
   );
 
+  const handleHelp = () => {
+    const phoneNumber = "5511940518638";
+    const message = encodeURIComponent(helpMessage.trim());
+
+    if (!message) {
+      Alert.alert("Aviso", "Digite uma mensagem antes de enviar.");
+      return;
+    }
+
+    const url = `https://wa.me/${phoneNumber}?text=${message}`;
+
+    Linking.openURL(url)
+      .then(() => setModalHelpVisible(false))
+      .catch(() => Alert.alert("Erro", "Não foi possível abrir o WhatsApp."));
+  };
+
   return (
-    <View style={styles.containerBox}>
-      <View style={styles.profileContainer}>
+    <View style={styles.container}>
+      <View style={styles.profile}>
         <Image
           source={require("../../../../assets/images/logo-verde.png")}
-          style={styles.profileImage}
+          style={styles.avatar}
         />
-        <Text style={styles.profileName}>{user?.nome}</Text>
+        <Text style={styles.userName}>{user?.nome || "Usuário"}</Text>
       </View>
 
       <FlatList
-        data={categories}
-        renderItem={renderItem}
+        data={options}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        renderItem={renderItem}
+        contentContainerStyle={styles.optionsList}
       />
+      <TouchableOpacity
+        style={[styles.button, styles.helpButton]}
+        onPress={() => setModalHelpVisible(true)}
+      >
+        <Text style={styles.buttonText}>Precisa de Ajuda?</Text>
+      </TouchableOpacity>
 
-      {/* Modal para editar nome */}
       <Modal
-        visible={modalVisible}
+        visible={modalEditVisible}
         transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+        animationType="fade"
+        onRequestClose={() => setModalEditVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Editar Nome</Text>
             <TextInput
+              style={styles.input}
               value={newName}
               onChangeText={setNewName}
-              style={styles.input}
-              placeholder="Novo nome"
+              placeholder="Digite seu novo nome"
+              autoFocus
+              maxLength={50}
             />
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleUpdateName}
-            >
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.saveButton]}
+                onPress={handleUpdateName}
+              >
+                <Text style={styles.buttonText}>Salvar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setModalEditVisible(false)}
+              >
+                <Text style={[styles.buttonText, { color: "#00B07C" }]}>
+                  Cancelar
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
 
-      {/* Modal para alterar senha */}
       <Modal
-        visible={passwordModalVisible}
+        visible={modalPasswordVisible}
         transparent
-        animationType="slide"
-        onRequestClose={() => setPasswordModalVisible(false)}
+        animationType="fade"
+        onRequestClose={() => setModalPasswordVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Alterar Senha</Text>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Redefinir Senha</Text>
             <Text style={styles.modalText}>
-              Deseja alterar sua senha? Um link será enviado para seu email.
+              Deseja receber um link para redefinir sua senha no seu email?
             </Text>
-            
-            <View style={styles.buttonGroup}>
+
+            <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.confirmButton, { backgroundColor: "#00D09E" }]}
+                style={[styles.button, styles.saveButton]}
                 onPress={handlePasswordReset}
               >
                 <Text style={styles.buttonText}>Sim</Text>
               </TouchableOpacity>
-              
               <TouchableOpacity
-                style={[styles.confirmButton, { backgroundColor: "#FF3B30" }]}
-                onPress={() => setPasswordModalVisible(false)}
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setModalPasswordVisible(false)}
               >
-                <Text style={styles.buttonText}>Não</Text>
+                <Text style={[styles.buttonText, { color: "#00B07C" }]}>
+                  Não
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={modalHelpVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalHelpVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Descreva sua necessidade.</Text>
+            <TextInput
+              style={[styles.input, { height: 100, textAlignVertical: "top" }]}
+              value={helpMessage}
+              onChangeText={setHelpMessage}
+              placeholder="Digite sua mensagem"
+              multiline
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.saveButton]}
+                onPress={handleHelp}
+              >
+                <Text style={styles.buttonText}>Enviar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setModalHelpVisible(false)}
+              >
+                <Text style={[styles.buttonText, { color: "#00B07C" }]}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -173,120 +245,107 @@ export default function GreyBox() {
 }
 
 const styles = StyleSheet.create({
-  containerBox: {
-    flex: 1,
-    width: "100%",
-    backgroundColor: "#F1FFF3",
-    paddingTop: 170,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-    position: "relative",
+  container: {
+    paddingTop: 40,
   },
-  list: {
-    paddingBottom: 30,
-  },
-  itemContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  box: {
-    width: "100%",
-    height: 50,
-    backgroundColor: "#007BFF",
-    borderRadius: 15,
+  helpButton: {
+    backgroundColor: "#00B07C",
+    marginTop: 20,
     justifyContent: "center",
+  },
+  profile: {
     alignItems: "center",
-    marginBottom: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 4,
+    marginBottom: 25,
   },
-  label: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 12,
   },
-  profileContainer: {
-    position: "absolute",
-    top: 25,
-    alignSelf: "center",
-    alignItems: "center",
-  },
-  profileImage: {
-    width: 70,
-    height: 70,
-  },
-  profileName: {
-    marginTop: 8,
-    fontSize: 18,
+  userName: {
+    fontSize: 22,
     fontWeight: "700",
-    color: "#00D09E",
+    color: "#00B07C",
+  },
+  optionsList: {
+    paddingHorizontal: 10,
+  },
+  optionBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E0F4EF",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  optionLabel: {
+    fontSize: 18,
+    marginLeft: 20,
+    color: "#004D40",
+    fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.38)",
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 30,
   },
-  modalContainer: {
-    width: "85%",
+  modalContent: {
+    width: "100%",
     backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 15,
+    borderRadius: 18,
+    padding: 25,
     alignItems: "center",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
+    fontWeight: "700",
+    marginBottom: 12,
+    color: "#00B07C",
   },
   modalText: {
     fontSize: 16,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   input: {
     width: "100%",
-    height: 40,
-    borderColor: "#ccc",
+    height: 44,
+    borderColor: "#00B07C",
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    marginBottom: 18,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-between",
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 5,
   },
   saveButton: {
-    backgroundColor: "#00D09E",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 10,
-    width: "100%",
-    alignItems: "center",
+    backgroundColor: "#00B07C",
   },
-  saveButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  cancelText: {
-    color: "#007BFF",
-  },
-  buttonGroup: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  confirmButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    width: "48%",
-    alignItems: "center",
+  cancelButton: {
+    backgroundColor: "#E0F4EF",
   },
   buttonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "700",
+    fontSize: 16,
   },
 });

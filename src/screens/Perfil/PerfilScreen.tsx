@@ -1,46 +1,35 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
+import HeaderPerfil from "./components/HeaderPerfil";
 import GreyBox from "./components/GreyBox";
-import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import BottomBar from "@/src/components/BottomBar";
 import { useRouter } from "expo-router";
 
 export default function PerfilScreen() {
-
   const router = useRouter();
+  
 
-  const handleNavigate = (route: string) => {
-    switch (route) {
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      default:
-        console.warn("Rota inválida:", route);
-    }
-  };
+  // Pode passar a função para o BottomBar para navegação personalizada
+  // const handleNavigate = (route: string) => {
+  //   if (!route) return;
+  //   router.push(route);
+  // };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <FontAwesome name="arrow-left" size={28} color="#fff" />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.title}>Perfil</Text>
-        </View>
-        <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
-      </View>
-      <GreyBox />
-      <BottomBar onPress={handleNavigate} />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <HeaderPerfil />
+
+      <ScrollView contentContainerStyle={styles.content}>
+        <GreyBox />
+      </ScrollView>
+
+      <BottomBar  />
+    </SafeAreaView>
   );
 }
 
@@ -48,22 +37,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#00D09E",
-    paddingTop: 60,
   },
-  header: {
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 60,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    paddingTop: 30,
+    paddingBottom: 100,
+    backgroundColor: "#F1FFF3",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
   },
-  icon: {},
-  title: {
-    fontSize: 22,
-    color: "#fff",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-
 });

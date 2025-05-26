@@ -5,13 +5,7 @@ import GreyBox from "./components/GreyBox";
 export default function LoginScreen() {
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../../assets/images/logo.png")}
-        style={[
-          styles.logo,
-        ]}
-      />
-      <Text style={styles.title}>Seja Bem Vindo</Text>
+      <Image source={require("@/assets/images/logo.png")} style={styles.logo} />
       <GreyBox />
     </View>
   );
@@ -24,14 +18,9 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     alignItems: "center",
   },
-  title: {
-    fontSize: 30,
-    fontWeight: "600",
-    color: "#fff",
-    marginBlock: 30,
-  },
   logo: {
+    marginVertical: 30,
     height: 90,
-    width: 90
-  }
+    width: 90,
+  },
 });

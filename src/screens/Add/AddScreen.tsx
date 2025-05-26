@@ -6,40 +6,17 @@ import BottomBar from "@/src/components/BottomBar";
 import { useRouter } from "expo-router";
 
 export default function AddScreen() {
-  const router = useRouter();
-
-  const handleNavigate = (route: string) => {
-    switch (route) {
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      case "":
-        router.push("/");
-        break;
-      default:
-        console.warn("Rota inválida:", route);
-    }
-  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <FontAwesome name="arrow-left" size={28} color="#fff" />
-        </TouchableOpacity>
+
         <View>
           <Text style={styles.title}>Adicionar Registro</Text>
         </View>
-        <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
       </View>
 
       <GreyBox />
-      <BottomBar onPress={handleNavigate} />
+      <BottomBar />
     </View>
   );
 }
@@ -54,7 +31,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 30,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
   },
   title: {

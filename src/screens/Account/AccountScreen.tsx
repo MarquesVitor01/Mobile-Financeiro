@@ -1,69 +1,54 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import GreyBox from "./components/GreyBox";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
-import BottomBar from "@/src/components/BottomBar";
-import { useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/src/config/firebaseConfig";
-import { useUser } from "@/src/context/UserContext"; // IMPORTADO
+import { useUser } from "@/src/context/UserContext";
+import GreyBox from "./components/GreyBox";
+import BottomBar from "@/src/components/BottomBar";
+import { useRouter } from "expo-router";
 
 export default function AccountScreen() {
-  const { user } = useUser(); // USUÁRIO ATUAL
+  const { user } = useUser();
   const [totalBalance, setTotalBalance] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [expensePercentage, setExpensePercentage] = useState(0);
-
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        if (!user) return;
+  const fetchTotals = useCallback(async () => {
+    if (!user) return;
 
-        const querySnapshot = await getDocs(collection(db, "financeiro"));
-        let totalBalanceTemp = 0;
-        let totalExpenseTemp = 0;
+    try {
+      const querySnapshot = await getDocs(collection(db, "financeiro"));
+      let balance = 0;
+      let expense = 0;
 
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const valor = data.valor / 100;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.userId !== user.id) return;
 
-          if (data.userId === user.id) { // FILTRO POR ID DO USUÁRIO
-            if (data.setor === "entrada") {
-              totalBalanceTemp += valor;
-            } else if (data.setor === "saida") {
-              totalExpenseTemp += valor;
-            }
-          }
-        });
+        const valor = data.valor / 100;
+        if (data.setor === "entrada") balance += valor;
+        else if (data.setor === "saida") expense += valor;
+      });
 
-        setTotalBalance(totalBalanceTemp);
-        setTotalExpense(totalExpenseTemp);
-
-        const rawPercentage = (totalExpenseTemp / totalBalanceTemp) * 100;
-        setExpensePercentage(parseFloat(rawPercentage.toFixed(1)));
-      } catch (error) {
-        console.error("Erro ao buscar transações:", error);
-      }
-    };
-
-    fetchTransactions();
+      setTotalBalance(balance);
+      setTotalExpense(expense);
+      setExpensePercentage(
+        balance ? parseFloat(((expense / balance) * 100).toFixed(1)) : 0
+      );
+    } catch (error) {
+      console.error("Erro ao buscar totais:", error);
+    }
   }, [user]);
 
+  useEffect(() => {
+    fetchTotals();
+  }, [fetchTotals]);
+
   const handleNavigate = (route: string) => {
-    switch (route) {
-      case "":
-        router.push("/");
-        break;
-      default:
-        console.warn("Rota inválida:", route);
-    }
+    if (route === "") router.push("/");
+    else console.warn("Rota desconhecida:", route);
   };
 
   return (
@@ -72,10 +57,13 @@ export default function AccountScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.title}>Registros</Text>
-        </View>
-        <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
+        <Text style={styles.title}>Registros</Text>
+        <TouchableOpacity
+          onPress={() => alert("Em desenvolvimento")}
+          style={styles.iconButton}
+        >
+          <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.balanceBox}>
@@ -96,10 +84,7 @@ export default function AccountScreen() {
 
         <View style={styles.progressBarContainer}>
           <View
-            style={[
-              styles.progressBarFill,
-              { width: `${expensePercentage}%` as `${number}%` },
-            ]}
+            style={[styles.progressBarFill, { width: `${expensePercentage}%` }]}
           />
         </View>
         <Text style={styles.progressText}>
@@ -108,7 +93,7 @@ export default function AccountScreen() {
         </Text>
       </View>
 
-      <GreyBox totalBalance={totalBalance} totalExpense={totalExpense} />
+      <GreyBox totalBalance={0} totalExpense={0} />
 
       <BottomBar onPress={handleNavigate} />
     </View>
@@ -119,7 +104,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#00D09E",
-    paddingTop: 60,
+    paddingTop: 40,
+  },
+  iconButton: {
+    padding: 8,
   },
   header: {
     paddingHorizontal: 20,
@@ -175,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   progressText: {
-    marginBlock: 13,
+    marginVertical: 13,
     color: "#fff",
     fontSize: 14,
     fontWeight: "bold",

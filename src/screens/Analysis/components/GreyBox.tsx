@@ -52,17 +52,13 @@ export default function GreyBox() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        if (!user) {
-          console.log("Usuário não logado.");
-          return;
-        }
+        if (!user) return;
 
         const querySnapshot = await getDocs(collection(db, "financeiro"));
         const transactions: any[] = [];
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-
           if (data.userId !== user.id) return;
 
           const date = new Date(data.data.seconds * 1000);
@@ -104,7 +100,6 @@ export default function GreyBox() {
         });
 
         const formattedData: Record<string, WeekData[]> = {};
-
         Object.entries(grouped).forEach(([mes, semanas]) => {
           formattedData[mes] = Object.entries(semanas).map(
             ([week, values]) => ({
@@ -118,7 +113,6 @@ export default function GreyBox() {
         const mesesDisponiveis = Object.keys(formattedData);
         setMonthData(formattedData);
         setSelectedMonth(mesesDisponiveis[0] || "");
-
         setFilteredItems(transactions);
       } catch (error) {
         console.error("Erro ao buscar dados do Firebase:", error);
@@ -130,35 +124,34 @@ export default function GreyBox() {
 
   const fillIncome = "#00D09E";
   const fillExpense = "#FF6B6B";
-
   const weeklyData = monthData[selectedMonth] || [];
   const maxValue = Math.max(
     ...weeklyData.flatMap((item) => [item.income, item.expense, 1])
   );
+
   const [tooltip, setTooltip] = useState<{
     index: number;
     type: "income" | "expense";
   } | null>(null);
-
-  const itemsDoMesSelecionado = filteredItems.filter((item) => {
-    return item.mes.toLowerCase() === selectedMonth.toLowerCase();
-  });
+  const itemsDoMesSelecionado = filteredItems.filter(
+    (item) => item.mes.toLowerCase() === selectedMonth.toLowerCase()
+  );
 
   return (
-    <View style={styles.containerBox}>
-      <View style={styles.grafico}>
+    <View style={styles.container}>
+      {/* Gráfico */}
+      <View style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.chartTitle}>
-            Entradas e Saídas - {selectedMonth}
-          </Text>
+          <Text style={styles.title}>Entradas e Saídas - {selectedMonth}</Text>
           <TouchableOpacity
             onPress={() => setShowMonthPicker(true)}
             style={styles.monthButton}
           >
-            <Feather name="calendar" size={24} color="#00D09E" />
+            <Feather name="calendar" size={20} color="#00D09E" />
           </TouchableOpacity>
         </View>
 
+        {/* Modal de meses */}
         <Modal
           visible={showMonthPicker}
           transparent={true}
@@ -189,15 +182,14 @@ export default function GreyBox() {
           </View>
         </Modal>
 
-        <View style={styles.chartContainer}>
+        <View style={styles.chart}>
           {weeklyData.map((week, index) => (
-            <View key={index} style={styles.weekContainer}>
+            <View key={index} style={styles.week}>
               <Text style={styles.weekLabel}>{week.week}</Text>
-              <View style={styles.barsContainer}>
+              <View style={styles.bars}>
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => setTooltip({ index, type: "income" })}
-                  style={{ alignItems: "center" }}
                 >
                   {tooltip?.index === index && tooltip?.type === "income" && (
                     <View style={styles.tooltip}>
@@ -209,8 +201,10 @@ export default function GreyBox() {
                   <View
                     style={[
                       styles.bar,
-                      styles.incomeBar,
-                      { height: (week.income / maxValue) * 150 },
+                      {
+                        backgroundColor: fillIncome,
+                        height: (week.income / maxValue) * 120,
+                      },
                     ]}
                   />
                 </TouchableOpacity>
@@ -218,7 +212,6 @@ export default function GreyBox() {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => setTooltip({ index, type: "expense" })}
-                  style={{ alignItems: "center" }}
                 >
                   {tooltip?.index === index && tooltip?.type === "expense" && (
                     <View style={styles.tooltip}>
@@ -230,8 +223,10 @@ export default function GreyBox() {
                   <View
                     style={[
                       styles.bar,
-                      styles.expenseBar,
-                      { height: (week.expense / maxValue) * 150 },
+                      {
+                        backgroundColor: fillExpense,
+                        height: (week.expense / maxValue) * 120,
+                      },
                     ]}
                   />
                 </TouchableOpacity>
@@ -240,33 +235,38 @@ export default function GreyBox() {
           ))}
         </View>
 
-        <View style={styles.legendContainer}>
+        <View style={styles.legend}>
           <View style={styles.legendItem}>
-            <View
-              style={[styles.legendColor, { backgroundColor: fillIncome }]}
-            />
-            <Text style={styles.legendText}>Entradas</Text>
+            <View style={[styles.legendDot, { backgroundColor: fillIncome }]} />
+            <Text>Entradas</Text>
           </View>
           <View style={styles.legendItem}>
             <View
-              style={[styles.legendColor, { backgroundColor: fillExpense }]}
+              style={[styles.legendDot, { backgroundColor: fillExpense }]}
             />
-            <Text style={styles.legendText}>Saídas</Text>
+            <Text>Saídas</Text>
           </View>
         </View>
       </View>
-      <ScrollView>
+
+      {/* Lista de itens */}
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
         {itemsDoMesSelecionado.map((item) => (
-          <View key={item.id} style={styles.item}>
+          <TouchableOpacity
+            key={item.id}
+            activeOpacity={0.8}
+            style={styles.item}
+          >
             <View
-              style={[
-                styles.iconCircleItem,
-                { backgroundColor: item.iconColor },
-              ]}
+              style={[styles.iconCircle, { backgroundColor: item.iconColor }]}
             >
-              <Feather name={item.icon as any} size={16} color="#fff" />
+              <Feather name={item.icon as any} size={18} color="#fff" />
             </View>
-            <View style={styles.itemContent}>
+            <View style={styles.itemInfo}>
               <Text style={styles.itemLabel}>{item.label}</Text>
               <Text style={styles.itemTime}>{item.time}</Text>
             </View>
@@ -274,7 +274,7 @@ export default function GreyBox() {
               <Text style={styles.itemType}>{item.category}</Text>
               <Text style={styles.itemValue}>{item.value}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -282,52 +282,102 @@ export default function GreyBox() {
 }
 
 const styles = StyleSheet.create({
-  containerBox: {
+  container: {
     flex: 1,
-    width: "100%",
     backgroundColor: "#F1FFF3",
-    paddingTop: 30,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-  },
-  grafico: {
-    backgroundColor: "#00D09E1A",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     padding: 20,
-    borderRadius: 50,
-    marginBottom: 30,
+  },
+  card: {
+    backgroundColor: "#E8F9F1",
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 20,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  chartTitle: {
+  title: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
     color: "#333",
   },
   monthButton: {
     padding: 8,
+    backgroundColor: "#fff",
     borderRadius: 20,
-    backgroundColor: "#F1FFF3",
-    elevation: 2,
+  },
+  chart: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 150,
+    marginTop: 10,
+  },
+  week: {
+    alignItems: "center",
+    flex: 1,
+  },
+  weekLabel: {
+    fontSize: 10,
+    marginBottom: 4,
+    color: "#555",
+  },
+  bars: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
+  bar: {
+    width: 12,
+    borderRadius: 4,
+    marginHorizontal: 2,
+  },
+  tooltip: {
+    position: "absolute",
+    bottom: "100%",
+    padding: 4,
+    backgroundColor: "#333",
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  tooltipText: {
+    color: "#fff",
+    fontSize: 10,
+  },
+  legend: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 10,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 5,
   },
   modalContainer: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     width: "80%",
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
   },
   monthOption: {
-    padding: 15,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
@@ -337,125 +387,64 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 10,
-    padding: 15,
+    padding: 12,
     backgroundColor: "#f5f5f5",
     borderRadius: 5,
   },
   cancelButtonText: {
-    fontSize: 16,
-    textAlign: "center",
     color: "#ff6b6b",
+    textAlign: "center",
   },
-  chartContainer: {
-    flexDirection: "row",
-    height: 200,
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingHorizontal: 10,
-  },
-  weekContainer: {
-    alignItems: "center",
+  list: {
     flex: 1,
+    marginBottom: 80, // espaço para não ser cortado pela bottom bar
   },
-  weekLabel: {
-    fontSize: 12,
-    marginBottom: 5,
-    color: "#555",
-  },
-  barsContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    height: "100%",
-  },
-  bar: {
-    width: 20,
-    marginHorizontal: 2,
-    justifyContent: "flex-end",
-    alignItems: "center",
-    borderRadius: 3,
-  },
-  incomeBar: {
-    backgroundColor: "#00D09E",
-  },
-  expenseBar: {
-    backgroundColor: "#FF6B6B",
-  },
-  legendContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 15,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 15,
-  },
-  legendColor: {
-    width: 15,
-    height: 15,
-    borderRadius: 3,
-    marginRight: 5,
-  },
-  legendText: {
-    fontSize: 12,
-    color: "#555",
-  },
-  tooltip: {
-    position: "absolute",
-    bottom: "100%",
-    backgroundColor: "#333",
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 6,
-    zIndex: 10,
-  },
-  tooltipText: {
-    color: "white",
-    fontSize: 10,
+  listContent: {
+    paddingBottom: 80, // espaço extra no final
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  iconCircleItem: {
-    width: 32,
-    height: 32,
+    padding: 16,
     borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10,
-  },
-  itemContent: {
-    flex: 1,
+    marginRight: 12,
   },
   itemLabel: {
     fontWeight: "600",
-    fontSize: 14,
-    color: "#333",
+    fontSize: 15,
   },
   itemTime: {
     fontSize: 12,
     color: "#888",
+    marginTop: 2,
   },
   itemCategory: {
     alignItems: "flex-end",
   },
   itemType: {
     fontSize: 12,
-    color: "#888",
+    color: "#aaa",
   },
   itemValue: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "bold",
     color: "#333",
+  },
+    itemInfo: {
+    flex: 1,
   },
 });
