@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 2,
     borderColor: "#00D09E",
+    backgroundColor: "#fff"
   },
   signUpText: {
     fontWeight: "700",

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { db } from "@/src/config/firebaseConfig";
@@ -44,10 +45,17 @@ const validFeatherIcons = new Set([
 
 export default function GreyBox() {
   const { user } = useUser();
+
+  // TODOS os hooks no topo, na ordem fixa
   const [monthData, setMonthData] = useState<Record<string, WeekData[]>>({});
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [filteredItems, setFilteredItems] = useState<ItemData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tooltip, setTooltip] = useState<{
+    index: number;
+    type: "income" | "expense";
+  } | null>(null);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -116,11 +124,21 @@ export default function GreyBox() {
         setFilteredItems(transactions);
       } catch (error) {
         console.error("Erro ao buscar dados do Firebase:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchTransactions();
-  }, []);
+  }, [user]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#00D09E" />
+      </View>
+    );
+  }
 
   const fillIncome = "#00D09E";
   const fillExpense = "#FF6B6B";
@@ -129,10 +147,6 @@ export default function GreyBox() {
     ...weeklyData.flatMap((item) => [item.income, item.expense, 1])
   );
 
-  const [tooltip, setTooltip] = useState<{
-    index: number;
-    type: "income" | "expense";
-  } | null>(null);
   const itemsDoMesSelecionado = filteredItems.filter(
     (item) => item.mes.toLowerCase() === selectedMonth.toLowerCase()
   );
@@ -217,14 +231,13 @@ export default function GreyBox() {
                     activeOpacity={0.8}
                     onPress={() => setTooltip({ index, type: "expense" })}
                   >
-                    {tooltip?.index === index &&
-                      tooltip?.type === "expense" && (
-                        <View style={styles.tooltip}>
-                          <Text style={styles.tooltipText}>
-                            R${week.expense.toFixed(0)}
-                          </Text>
-                        </View>
-                      )}
+                    {tooltip?.index === index && tooltip?.type === "expense" && (
+                      <View style={styles.tooltip}>
+                        <Text style={styles.tooltipText}>
+                          R${week.expense.toFixed(0)}
+                        </Text>
+                      </View>
+                    )}
                     <View
                       style={[
                         styles.bar,
@@ -242,15 +255,11 @@ export default function GreyBox() {
 
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View
-                style={[styles.legendDot, { backgroundColor: fillIncome }]}
-              />
+              <View style={[styles.legendDot, { backgroundColor: fillIncome }]} />
               <Text>Entradas</Text>
             </View>
             <View style={styles.legendItem}>
-              <View
-                style={[styles.legendDot, { backgroundColor: fillExpense }]}
-              />
+              <View style={[styles.legendDot, { backgroundColor: fillExpense }]} />
               <Text>Saídas</Text>
             </View>
           </View>
@@ -289,6 +298,10 @@ export default function GreyBox() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   container: {
     flex: 1,
     backgroundColor: "#F1FFF3",
@@ -404,10 +417,10 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
-    marginBottom: 80, // espaço para não ser cortado pela bottom bar
+    marginBottom: 80,
   },
   listContent: {
-    paddingBottom: 80, // espaço extra no final
+    paddingBottom: 80,
   },
   item: {
     flexDirection: "row",
@@ -442,9 +455,8 @@ const styles = StyleSheet.create({
     color: "#aaa",
   },
   itemValue: {
-    fontSize: 15,
     fontWeight: "bold",
-    color: "#333",
+    fontSize: 15,
   },
   itemInfo: {
     flex: 1,

@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   secondaryButton: {
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
     borderWidth: 2,
     borderColor: "#00D09E",
   },

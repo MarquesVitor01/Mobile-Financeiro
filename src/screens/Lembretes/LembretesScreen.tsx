@@ -12,7 +12,6 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   collection,
   addDoc,
@@ -30,8 +29,8 @@ import { useRouter } from "expo-router";
 interface Lembrete {
   id: string;
   texto: string;
-  data: string;
-  horario: string;
+  data: string; // yyyy-MM-dd
+  horario?: string; // novo campo opcional hh:mm
 }
 
 interface Day {
@@ -47,19 +46,15 @@ export default function LembretesScreen() {
   const [lembretes, setLembretes] = useState<Lembrete[]>([]);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [texto, setTexto] = useState<string>("");
-  const [horario, setHorario] = useState<Date>(new Date());
-  const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+  const [horario, setHorario] = useState<string>("");
   const [editingLembrete, setEditingLembrete] = useState<Lembrete | null>(null);
   const router = useRouter();
 
   const [lembretesMes, setLembretesMes] = useState<Lembrete[]>([]);
-
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
   useEffect(() => {
-    if (selectedDate) {
-      fetchLembretes();
-    }
+    if (selectedDate) fetchLembretes();
   }, [selectedDate]);
 
   useEffect(() => {
@@ -69,7 +64,7 @@ export default function LembretesScreen() {
   const fetchLembretesMes = async () => {
     const today = new Date();
     const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
 
     const q = query(
       collection(db, "lembretes"),
@@ -140,7 +135,7 @@ export default function LembretesScreen() {
     const lembreteData = {
       texto,
       data: selectedDate,
-      horario: horario.toISOString(),
+      horario: horario || null,
     };
 
     try {
@@ -170,15 +165,30 @@ export default function LembretesScreen() {
   const abrirEditar = (lembrete: Lembrete) => {
     setEditingLembrete(lembrete);
     setTexto(lembrete.texto);
-    setHorario(new Date(lembrete.horario));
+    setHorario(lembrete.horario || "");
     setModalVisible(true);
   };
 
   const limparFormulario = () => {
     setTexto("");
-    setHorario(new Date());
+    setHorario("");
     setEditingLembrete(null);
     setModalVisible(false);
+  };
+
+  const formatarHorario = (texto: string) => {
+    // Remove tudo que não for número
+    let digits = texto.replace(/\D/g, "");
+
+    if (digits.length > 4) digits = digits.slice(0, 4);
+
+    if (digits.length >= 3) {
+      return digits.slice(0, 2) + ":" + digits.slice(2);
+    } else if (digits.length >= 1) {
+      return digits;
+    }
+
+    return "";
   };
 
   const onDayPress = (day: Day) => {
@@ -186,16 +196,6 @@ export default function LembretesScreen() {
 
     const lembsNoDia = lembretesMes.filter((l) => l.data === day.dateString);
     setTooltipVisible(lembsNoDia.length > 0);
-  };
-
-  const handleTimeInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const timeString = event.target.value;
-    const [hours, minutes] = timeString.split(":").map(Number);
-    const newDate = new Date(horario);
-    newDate.setHours(hours, minutes);
-    setHorario(newDate);
   };
 
   return (
@@ -242,12 +242,7 @@ export default function LembretesScreen() {
               renderItem={({ item }) => (
                 <View style={styles.tooltipItem}>
                   <Text style={styles.tooltipText}>{item.texto}</Text>
-                  <Text style={styles.tooltipTime}>
-                    {new Date(item.horario).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
+                  <Text style={styles.tooltipTime}>{item.horario}</Text>
                 </View>
               )}
             />
@@ -271,12 +266,7 @@ export default function LembretesScreen() {
             renderItem={({ item }) => (
               <View style={styles.card}>
                 <Text style={styles.cardText}>{item.texto}</Text>
-                <Text style={styles.cardTime}>
-                  {new Date(item.horario).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
+                <Text style={styles.cardTime}>{item.horario}</Text>
                 <View style={styles.actions}>
                   <TouchableOpacity onPress={() => abrirEditar(item)}>
                     <Text style={styles.editButton}>Editar</Text>
@@ -322,52 +312,14 @@ export default function LembretesScreen() {
                   multiline
                 />
 
-                {Platform.OS === "web" ? (
-                  <input
-                    type="time"
-                    value={horario.toTimeString().slice(0, 5)}
-                    onChange={(event) => {
-                      // Isso impede que o clique feche o modal também no web
-                      event.stopPropagation();
-                      handleTimeInputChange(event);
-                    }}
-                    style={{
-                      fontSize: 18,
-                      padding: 12,
-                      borderRadius: 8,
-                      border: "1px solid #D1D5DB",
-                      marginBottom: 16,
-                      width: "100%",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      onPress={() => setShowTimePicker(true)}
-                      style={styles.timePickerButton}
-                    >
-                      <Text style={styles.timePickerText}>
-                        {horario.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </Text>
-                    </TouchableOpacity>
-                    {showTimePicker && (
-                      <DateTimePicker
-                        value={horario}
-                        mode="time"
-                        is24Hour={true}
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={(_, selected) => {
-                          setShowTimePicker(false);
-                          if (selected) setHorario(selected);
-                        }}
-                      />
-                    )}
-                  </>
-                )}
+                <TextInput
+                  placeholder="Horário (hh:mm)"
+                  value={horario}
+                  onChangeText={(text) => setHorario(formatarHorario(text))}
+                  style={[styles.input, { marginBottom: 12 }]}
+                  keyboardType="numeric"
+                  maxLength={5}
+                />
 
                 <View style={styles.modalActions}>
                   <TouchableOpacity
@@ -388,14 +340,15 @@ export default function LembretesScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>Voltar</Text>
       </TouchableOpacity>
+
       <BottomBar />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   backButton: {
     backgroundColor: "#E74C3C",
@@ -552,3 +505,6 @@ const styles = StyleSheet.create({
   tooltipText: { fontSize: 16, color: "#111827" },
   tooltipTime: { fontSize: 14, color: "#6B7280" },
 });
+function setHorario(date: Date) {
+  throw new Error("Function not implemented.");
+}

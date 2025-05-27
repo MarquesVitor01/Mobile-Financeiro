@@ -12,6 +12,7 @@ interface ConfirmModalProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  loading?: boolean;
 }
 
 export function ConfirmModal({
@@ -19,6 +20,7 @@ export function ConfirmModal({
   message,
   onConfirm,
   onCancel,
+  loading = false,
 }: ConfirmModalProps) {
   return (
     <Modal

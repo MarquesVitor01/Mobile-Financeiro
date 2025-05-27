@@ -1,17 +1,12 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/src/config/firebaseConfig";
-import { useUser } from "@/src/context/UserContext";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import GreyBox from "./components/GreyBox";
 import BottomBar from "@/src/components/BottomBar";
 import { useRouter } from "expo-router";
 
 export default function AccountScreen() {
   const router = useRouter();
-
-
 
   return (
     <View style={styles.container}>

@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Platform,
+  ActivityIndicator,
+  Alert,
+  Modal,
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-
+import { format, isValid, parse } from "date-fns";
 import {
   collection,
   getDocs,
@@ -22,6 +23,7 @@ import {
 import { db } from "@/src/config/firebaseConfig";
 import { useUser } from "@/src/context/UserContext";
 import { ConfirmModal } from "./ConfirmModal";
+import { DatePickerModal } from "./DatePickerModal";
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
@@ -55,17 +57,19 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
 
   const [searchText, setSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
 
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     const fetchTransactions = async () => {
+      if (!user) return;
+      setLoading(true);
       try {
-        if (!user) return;
-
         const q = query(
           collection(db, "financeiro"),
           where("userId", "==", user.id)
@@ -88,7 +92,7 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
                 ? "arrow-down-circle"
                 : "arrow-up-circle",
             label: data.nome || "Gasto",
-            time: rawDate.toLocaleString("pt-BR"),
+            time: format(rawDate, "dd/MM/yyyy HH:mm"),
             category: data.gasto || data.setor || "Outros",
             value:
               (data.setor === "saida" ? "-" : "") +
@@ -105,6 +109,9 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
         setTransactions(allTransactions);
       } catch (error) {
         console.error("Erro ao buscar transações:", error);
+        Alert.alert("Erro", "Não foi possível carregar as transações.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -124,7 +131,9 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
 
     if (selectedDate) {
       filteredList = filteredList.filter(
-        (item) => item.rawDate.toDateString() === selectedDate.toDateString()
+        (item) =>
+          format(item.rawDate, "yyyy-MM-dd") ===
+          format(selectedDate, "yyyy-MM-dd")
       );
     }
 
@@ -144,31 +153,25 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   const confirmDelete = async () => {
     if (!selectedId) return;
 
+    setDeleting(true);
+
     try {
       await deleteDoc(doc(db, "financeiro", selectedId));
       setTransactions((prev) => prev.filter((item) => item.id !== selectedId));
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
+      Alert.alert("Erro", "Não foi possível excluir a transação.");
+    } finally {
+      setDeleting(false);
+      closeConfirm();
     }
-    closeConfirm();
   };
 
-  const handleConfirmDate = (date: Date) => {
-    setSelectedDate(date);
-    setDatePickerVisibility(false);
-  };
-
-  // Estilo CSS separado para o input date no Web (não vai no StyleSheet)
-  const dateInputWebStyle: React.CSSProperties = {
-    padding: 10,
-    borderRadius: 12,
-    border: "1px solid #ccc",
-    fontSize: 14,
-    fontFamily: "sans-serif",
-    width: 140,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    outline: "none",
-    transition: "border-color 0.3s ease",
+  const handleSelectDate = (dateString: string) => {
+    const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
+    if (isValid(parsedDate)) {
+      setSelectedDate(parsedDate);
+    }
   };
 
   return (
@@ -181,39 +184,16 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
           style={styles.searchInput}
         />
 
-        {Platform.OS === "web" ? (
-          <input
-            type="date"
-            onChange={(e) => setSelectedDate(new Date(e.target.value))}
-            style={dateInputWebStyle}
-            onFocus={(e) => (e.target.style.borderColor = "#00D09E")}
-            onBlur={(e) => (e.target.style.borderColor = "#ccc")}
-          />
-        ) : (
-          <>
-            <TouchableOpacity
-              onPress={() => setDatePickerVisibility(true)}
-              style={styles.dateButton}
-            >
-              <Feather name="calendar" size={16} color="#fff" />
-              <Text style={styles.dateButton}>
-                {selectedDate
-                  ? selectedDate.toLocaleDateString("pt-BR")
-                  : "Filtrar por data"}
-              </Text>
-            </TouchableOpacity>
-
-            <DateTimePickerModal
-              isVisible={isDatePickerVisible}
-              mode="date"
-              onConfirm={handleConfirmDate}
-              onCancel={() => setDatePickerVisibility(false)}
-            />
-          </>
-        )}
+        <TouchableOpacity
+          onPress={() => setDatePickerVisible(true)}
+          style={styles.dateInput}
+        >
+          <Text>
+            {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Selecionar Data"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Botão Limpar / Excluir filtros, agora abaixo dos filtros e centralizado */}
       <View style={styles.clearButtonContainer}>
         <TouchableOpacity
           onPress={() => {
@@ -246,47 +226,82 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.transactions}>
-          {filtered.map((item) => (
-            <View key={item.id} style={styles.item}>
-              <View
-                style={[
-                  styles.iconCircleItem,
-                  { backgroundColor: item.iconColor },
-                ]}
-              >
-                <Feather name={item.icon} size={16} color="#fff" />
+        {loading ? (
+          <ActivityIndicator size="large" color="#00D09E" />
+        ) : filtered.length === 0 ? (
+          <Text style={styles.emptyText}>Nenhuma transação encontrada.</Text>
+        ) : (
+          <View style={styles.transactions}>
+            {filtered.map((item) => (
+              <View key={item.id} style={styles.item}>
+                <View
+                  style={[
+                    styles.iconCircleItem,
+                    { backgroundColor: item.iconColor },
+                  ]}
+                >
+                  <Feather name={item.icon} size={16} color="#fff" />
+                </View>
+                <View style={styles.itemContent}>
+                  <Text style={styles.itemLabel}>{item.label}</Text>
+                  <Text style={styles.itemTime}>{item.time}</Text>
+                </View>
+                <View style={styles.itemCategory}>
+                  <Text style={styles.itemType}>{item.category}</Text>
+                  <Text style={styles.itemValue}>{item.value}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => openConfirm(item.id)}
+                  style={{ marginLeft: 10 }}
+                  disabled={deleting}
+                >
+                  <MaterialIcons
+                    name="delete"
+                    size={24}
+                    color={deleting ? "#ccc" : "#E63946"}
+                  />
+                </TouchableOpacity>
               </View>
-              <View style={styles.itemContent}>
-                <Text style={styles.itemLabel}>{item.label}</Text>
-                <Text style={styles.itemTime}>{item.time}</Text>
-              </View>
-              <View style={styles.itemCategory}>
-                <Text style={styles.itemType}>{item.category}</Text>
-                <Text style={styles.itemValue}>{item.value}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => openConfirm(item.id)}
-                style={{ marginLeft: 10 }}
-              >
-                <MaterialIcons name="delete" size={24} color="#E63946" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
+
+      <DatePickerModal
+        visible={isDatePickerVisible}
+        onSelectDate={(dateString) => {
+          handleSelectDate(dateString);
+          setDatePickerVisible(false);
+        }}
+        onClose={() => setDatePickerVisible(false)}
+      />
 
       <ConfirmModal
         visible={confirmVisible}
         message="Tem certeza que deseja excluir esta transação?"
         onConfirm={confirmDelete}
         onCancel={closeConfirm}
+        loading={deleting}
       />
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  dateInput: {
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    fontSize: 16,
+    width: 140,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   containerBox: {
     flex: 1,
     width: "100%",
@@ -383,20 +398,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 6,
   },
-  dateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#00D09E",
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 12,
-    minWidth: 140,
-    justifyContent: "center",
-    elevation: 3,
-    shadowColor: "#00D09E",
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-  },
   clearButtonContainer: {
     marginBottom: 15,
     alignItems: "center",
@@ -415,5 +416,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 40,
+    fontSize: 16,
+    color: "#666",
   },
 });
