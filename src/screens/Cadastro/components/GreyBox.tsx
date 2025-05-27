@@ -19,7 +19,7 @@ export default function GreyBox() {
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [numero, setNumero] = useState("");
+  const [numero, setNumero] = useState(""); // Armazena só os dígitos
   const [dataNascimento, setDataNascimento] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -33,6 +33,28 @@ export default function GreyBox() {
       4,
       8
     )}`;
+  };
+
+  const formatarNumero = (texto: string) => {
+    const numeros = texto.replace(/\D/g, "");
+    const tamanho = numeros.length;
+
+    if (tamanho === 0) return "";
+    if (tamanho < 3) return `(${numeros}`;
+    if (tamanho < 8) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+    if (tamanho <= 11)
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
+        7
+      )}`;
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
+      7,
+      11
+    )}`;
+  };
+
+  const handleNumeroChange = (text: string) => {
+    const numeros = text.replace(/\D/g, "");
+    setNumero(numeros);
   };
 
   const handleSignUp = async () => {
@@ -53,7 +75,7 @@ export default function GreyBox() {
         uid: user.uid,
         nome,
         email,
-        numero,
+        numero, // aqui vai sem formatação
         dataNascimento,
         criadoEm: new Date(),
       });
@@ -98,9 +120,10 @@ export default function GreyBox() {
         style={styles.input}
         placeholder="(11) 99999-9999"
         placeholderTextColor="#A9A9A9"
-        value={numero}
-        onChangeText={setNumero}
+        value={formatarNumero(numero)}
+        onChangeText={handleNumeroChange}
         keyboardType="phone-pad"
+        maxLength={15} // Limite máximo para a máscara
       />
       <Text style={styles.label}>Data de Nascimento</Text>
       <TextInput

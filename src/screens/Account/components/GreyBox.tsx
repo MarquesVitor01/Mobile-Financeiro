@@ -5,8 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  Platform,
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+
 import {
   collection,
   getDocs,
@@ -49,6 +53,11 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   const [filtered, setFiltered] = useState<TransactionItem[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("entrada");
 
+  const [searchText, setSearchText] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -66,7 +75,6 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
 
         querySnapshot.forEach((docSnap) => {
           const data = docSnap.data();
-
           const rawDate = data?.data?.seconds
             ? new Date(data.data.seconds * 1000)
             : new Date();
@@ -104,11 +112,24 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   }, [user]);
 
   useEffect(() => {
-    const filteredList = transactions.filter(
+    let filteredList = transactions.filter(
       (item) => item.setor === selectedFilter
     );
+
+    if (searchText) {
+      filteredList = filteredList.filter((item) =>
+        item.label.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    if (selectedDate) {
+      filteredList = filteredList.filter(
+        (item) => item.rawDate.toDateString() === selectedDate.toDateString()
+      );
+    }
+
     setFiltered(filteredList);
-  }, [transactions, selectedFilter]);
+  }, [transactions, selectedFilter, searchText, selectedDate]);
 
   const openConfirm = (id: string) => {
     setSelectedId(id);
@@ -132,13 +153,86 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
     closeConfirm();
   };
 
+  const handleConfirmDate = (date: Date) => {
+    setSelectedDate(date);
+    setDatePickerVisibility(false);
+  };
+
+  // Estilo CSS separado para o input date no Web (não vai no StyleSheet)
+  const dateInputWebStyle: React.CSSProperties = {
+    padding: 10,
+    borderRadius: 12,
+    border: "1px solid #ccc",
+    fontSize: 14,
+    fontFamily: "sans-serif",
+    width: 140,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    outline: "none",
+    transition: "border-color 0.3s ease",
+  };
+
   return (
     <>
+      <View style={styles.filtersContainer}>
+        <TextInput
+          placeholder="Buscar por nome..."
+          value={searchText}
+          onChangeText={setSearchText}
+          style={styles.searchInput}
+        />
+
+        {Platform.OS === "web" ? (
+          <input
+            type="date"
+            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+            style={dateInputWebStyle}
+            onFocus={(e) => (e.target.style.borderColor = "#00D09E")}
+            onBlur={(e) => (e.target.style.borderColor = "#ccc")}
+          />
+        ) : (
+          <>
+            <TouchableOpacity
+              onPress={() => setDatePickerVisibility(true)}
+              style={styles.dateButton}
+            >
+              <Feather name="calendar" size={16} color="#fff" />
+              <Text style={styles.dateButton}>
+                {selectedDate
+                  ? selectedDate.toLocaleDateString("pt-BR")
+                  : "Filtrar por data"}
+              </Text>
+            </TouchableOpacity>
+
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              onConfirm={handleConfirmDate}
+              onCancel={() => setDatePickerVisibility(false)}
+            />
+          </>
+        )}
+      </View>
+
+      {/* Botão Limpar / Excluir filtros, agora abaixo dos filtros e centralizado */}
+      <View style={styles.clearButtonContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            setSelectedDate(null);
+            setSearchText("");
+          }}
+          style={styles.clearButton}
+        >
+          <Text style={styles.clearButtonText}>Limpar filtros</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView style={styles.containerBox}>
         <View style={styles.tabContainer}>
           <TouchableOpacity onPress={() => setSelectedFilter("entrada")}>
             <Text
-              style={selectedFilter === "entrada" ? styles.activeTab : styles.tab}
+              style={
+                selectedFilter === "entrada" ? styles.activeTab : styles.tab
+              }
             >
               Entrada
             </Text>
@@ -268,5 +362,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#00D09E",
+  },
+  filtersContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 5,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    fontSize: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+  },
+  dateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#00D09E",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    minWidth: 140,
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#00D09E",
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+  },
+  clearButtonContainer: {
+    marginBottom: 15,
+    alignItems: "center",
+  },
+  clearButton: {
+    backgroundColor: "#E63946",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#E63946",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });

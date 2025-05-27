@@ -8,15 +8,15 @@ export default function HeaderPerfil() {
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+      {/* <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
         <FontAwesome name="arrow-left" size={28} color="#fff" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <Text style={styles.title}>Perfil</Text>
 
-      <TouchableOpacity onPress={() => alert("Em desenvolvimento")} style={styles.iconButton}>
+      {/* <TouchableOpacity onPress={() => alert("Em desenvolvimento")} style={styles.iconButton}>
         <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
@@ -24,7 +24,7 @@ export default function HeaderPerfil() {
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,

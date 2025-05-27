@@ -35,7 +35,9 @@ export default function NextBox({
 
       <TouchableOpacity onPress={onNext} accessibilityRole="button">
         <Text style={styles.nextText}>
-          {currentIndex === 0 ? "Tenha controle dos seus gastos e acompanhe sua evolução mês a mês." : "Registre despesas, visualize relatórios e tome decisões com mais clareza."}
+          {currentIndex === 0
+            ? "Tenha controle dos seus gastos e acompanhe sua evolução mês a mês."
+            : "Registre despesas, visualize relatórios e tome decisões com mais clareza."}
         </Text>
       </TouchableOpacity>
 
@@ -78,23 +80,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 30,
+    shadowColor: "#00D09E",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   image: {
-    width: 240,
-    height: 240,
+    width: 220,
+    height: 220,
   },
   nextText: {
     color: "#0E3E3E",
     fontFamily: "Poppins",
-    fontWeight: "600",
-    fontSize: 18,
+    fontWeight: "500",
+    fontSize: 17,
     marginBottom: 20,
     textAlign: "center",
-    padding: 10
+    paddingHorizontal: 20,
+    lineHeight: 24,
   },
   dotsContainer: {
     flexDirection: "row",
-    marginTop: 10,
+    marginTop: 20,
     gap: 10,
   },
   dot: {
@@ -102,22 +110,29 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "#B0CFC7",
+    opacity: 0.5,
   },
   activeDot: {
     backgroundColor: "#00D09E",
+    opacity: 1,
   },
   cadastroButton: {
     marginTop: 30,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
     backgroundColor: "#00D09E",
-    borderRadius: 25,
-    marginBottom: 20,
+    borderRadius: 30,
+    shadowColor: "#00D09E",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
   cadastroText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
     fontFamily: "Poppins",
+    letterSpacing: 0.5,
   },
 });

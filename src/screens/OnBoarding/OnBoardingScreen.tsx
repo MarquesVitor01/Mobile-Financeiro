@@ -81,22 +81,23 @@ export default function OnBoardingScreen() {
 
 const styles = StyleSheet.create({
   slide: {
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
+    width: width,
+    height: height,
     backgroundColor: "#00D09E",
   },
   titleContainer: {
-    marginTop: 50,
+    marginTop: 60,
     paddingHorizontal: 40,
   },
   titleText: {
     textAlign: "center",
     fontFamily: "Poppins",
-    fontSize: 30,
-    fontWeight: "600",
-    lineHeight: 39,
+    fontSize: 32,
+    fontWeight: "700",
+    lineHeight: 40,
     color: "#fff",
-    paddingBlock: 20
+    paddingVertical: 20,
+    letterSpacing: 0.5,
   },
   nextBoxContainer: {
     flex: 1,

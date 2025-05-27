@@ -16,7 +16,11 @@ export default function Button({ title, onPress, variant = "primary" }: ButtonPr
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.button, variant === "secondary" && styles.secondaryButton]}
+      activeOpacity={0.8}
+      style={[
+        styles.button,
+        variant === "secondary" && styles.secondaryButton,
+      ]}
     >
       <Text
         style={[
@@ -32,16 +36,22 @@ export default function Button({ title, onPress, variant = "primary" }: ButtonPr
 
 const styles = StyleSheet.create({
   button: {
-    width: 207,
-    height: 45,
+    width: 240,
+    height: 50,
     backgroundColor: "#00D09E",
-    borderRadius: 40,
+    borderRadius: 30,
     marginVertical: 8,
     alignItems: "center",
     justifyContent: "center",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
   },
   secondaryButton: {
-    backgroundColor: "#DFF7E2",
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: "#00D09E",
   },
   buttonText: {
     fontFamily: "Poppins",
@@ -50,6 +60,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   secondaryText: {
-    color: "#0E3E3E",
+    color: "#00D09E",
   },
 });

@@ -8,7 +8,11 @@ interface PrimaryButtonProps {
   style?: ViewStyle;
 }
 
-export default function PrimaryButton({ label, onPress, style }: PrimaryButtonProps) {
+export default function PrimaryButton({
+  label,
+  onPress,
+  style,
+}: PrimaryButtonProps) {
   return (
     <TouchableOpacity style={[styles.button, style]} onPress={onPress}>
       <Text style={styles.text}>{label}</Text>
@@ -16,18 +20,25 @@ export default function PrimaryButton({ label, onPress, style }: PrimaryButtonPr
   );
 }
 
+// PrimaryButton.tsx (estilo apenas)
 const styles = StyleSheet.create({
   button: {
     width: "100%",
-    backgroundColor: "#00D09E",
-    paddingVertical: 14,
-    borderRadius: 25,
+    paddingVertical: 16,
+    borderRadius: 30,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 12,
+    backgroundColor: "#00D09E",
+    marginVertical: 8,
+    justifyContent: "center",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
   },
   text: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
   },
 });

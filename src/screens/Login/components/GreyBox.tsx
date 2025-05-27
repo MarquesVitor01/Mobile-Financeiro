@@ -1,3 +1,4 @@
+// src/components/Login/GreyBox.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -53,90 +54,126 @@ export default function GreyBox() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <Input
-        label="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <PasswordInput
-        label="Senha"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <PrimaryButton label="Log In" onPress={handleLogin} />
-
-      <TouchableOpacity
-        style={styles.signUpButton}
-        onPress={() => router.push("/onBoarding")}
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.signUpText}>Sign Up</Text>
-      </TouchableOpacity>
+        <View style={styles.box}>
+          <Input
+            label="E-mail"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+          />
+          <PasswordInput
+            label="Senha"
+            value={password}
+            onChangeText={setPassword}
+          />
 
-      <Text style={styles.fingerprintText}>
-        Utilize <Text style={styles.highlight}>Fingerprint</Text> Para Acessar
-      </Text>
+          <PrimaryButton
+            label="Entrar"
+            onPress={handleLogin}
+            style={styles.loginButton}
+          />
 
-      <TouchableOpacity onPress={() => router.push("/onBoarding")}>
-        <Text style={styles.bottomText}>
-          Não Possui Uma Conta?{" "}
-          <Text style={styles.highlight}>Criar Conta</Text>
+          <TouchableOpacity
+            style={styles.signUpButton}
+            onPress={() => router.push("/onBoarding")}
+          >
+            <Text style={styles.signUpText}>Criar Conta</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.fingerprintText}>
+          Utilize <Text style={styles.highlight}>Fingerprint</Text> para acessar
         </Text>
-      </TouchableOpacity>
-    </ScrollView>
+
+        <TouchableOpacity onPress={() => router.push("/onBoarding")}>
+          <Text style={styles.bottomText}>
+            Não possui uma conta?{" "}
+            <Text style={styles.highlight}>Crie uma agora</Text>
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F1FFF3",
+    width: "100%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 20,
+  },
   container: {
     flex: 1,
-    width: "100%",
-    backgroundColor: "#F1FFF3",
-    paddingTop: 70,
-    padding: 24,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    paddingHorizontal: 24,
   },
   contentContainer: {
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 60,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "700",
-    color: "#1B1B1F",
-    marginBottom: 24,
+    color: "#007B5E",
+    marginBottom: 30,
     textAlign: "center",
+    letterSpacing: 1,
+  },
+  box: {
+    width: "100%",
+
+    marginBottom: 30,
+  },
+  loginButton: {
+    marginTop: 15,
+    backgroundColor: "#00B07C",
   },
   signUpButton: {
-    backgroundColor: "#E1F3E7",
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    marginTop: 16,
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 12,
+    marginVertical: 8,
+    justifyContent: "center",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
+    borderWidth: 2,
+    borderColor: "#00D09E",
   },
   signUpText: {
-    fontWeight: "bold",
-    color: "#00D09E",
+    fontWeight: "700",
+    color: "#00B07C",
     fontSize: 16,
   },
   fingerprintText: {
-    marginTop: 24,
+    fontSize: 14,
     color: "#333",
-    fontSize: 13,
+    marginBottom: 12,
+    textAlign: "center",
   },
   bottomText: {
-    marginTop: 16,
-    fontSize: 13,
-    textAlign: "center",
+    fontSize: 14,
     color: "#333",
+    textAlign: "center",
+    marginTop: 5,
   },
   highlight: {
-    color: "#00D09E",
-    fontWeight: "bold",
+    color: "#00B07C",
+    fontWeight: "700",
   },
 });

@@ -19,9 +19,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 30,
-    fontWeight: "600",
     color: "#fff",
     marginBottom: 30,
+    fontSize: 32,
+    fontWeight: "bold",
+    fontFamily: "Poppins",
+    textShadowColor: "rgba(0, 255, 198, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 10,
   },
 });

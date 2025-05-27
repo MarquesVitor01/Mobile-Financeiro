@@ -18,9 +18,11 @@ import { db, auth } from "@/src/config/firebaseConfig";
 import { signOut, sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "expo-router";
 
+// Adiciona item 'lembretes' logo após 'security'
 const options = [
   { id: "edit", label: "Editar Nome", icon: "edit" },
   { id: "security", label: "Segurança", icon: "shield-alt" },
+  { id: "lembretes", label: "Lembretes", icon: "bell" }, // novo item
   { id: "logout", label: "Sair", icon: "sign-out-alt" },
 ];
 
@@ -53,7 +55,6 @@ export default function GreyBox() {
     }
   };
 
-  // Envia email para resetar senha
   const handlePasswordReset = async () => {
     if (!user?.email) return;
 
@@ -69,12 +70,13 @@ export default function GreyBox() {
     }
   };
 
-  // Trata clique nos botões da lista
   const handleOptionPress = (id: string) => {
     if (id === "edit") {
       setModalEditVisible(true);
     } else if (id === "security") {
       setModalPasswordVisible(true);
+    } else if (id === "lembretes") {
+      router.push("/lembretes");
     } else if (id === "logout") {
       signOut(auth)
         .then(() => {
@@ -87,12 +89,26 @@ export default function GreyBox() {
 
   const renderItem = ({ item }: { item: (typeof options)[0] }) => (
     <TouchableOpacity
-      style={styles.optionBox}
+      style={[
+        styles.optionBox,
+        item.id === "logout" && styles.logoutButton,
+      ]}
       activeOpacity={0.7}
       onPress={() => handleOptionPress(item.id)}
     >
-      <FontAwesome5 name={item.icon as any} size={24} color="#00B07C" />
-      <Text style={styles.optionLabel}>{item.label}</Text>
+      <FontAwesome5
+        name={item.icon as any}
+        size={24}
+        color={item.id === "logout" ? "#fff" : "#fff"}
+      />
+      <Text
+        style={[
+          styles.optionLabel,
+          item.id === "logout" && styles.logoutButtonText,
+        ]}
+      >
+        {item.label}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -128,6 +144,7 @@ export default function GreyBox() {
         renderItem={renderItem}
         contentContainerStyle={styles.optionsList}
       />
+      
       <TouchableOpacity
         style={[styles.button, styles.helpButton]}
         onPress={() => setModalHelpVisible(true)}
@@ -250,7 +267,7 @@ const styles = StyleSheet.create({
   },
   helpButton: {
     backgroundColor: "#00B07C",
-    marginTop: 20,
+    marginTop: 80,
     justifyContent: "center",
   },
   profile: {
@@ -274,7 +291,7 @@ const styles = StyleSheet.create({
   optionBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E0F4EF",
+    backgroundColor: "#4F46E5",
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -287,7 +304,7 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 18,
     marginLeft: 20,
-    color: "#004D40",
+    color: "#fff",
     fontWeight: "600",
   },
   modalOverlay: {
@@ -347,5 +364,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
+  },
+  logoutButton: {
+    backgroundColor: "#E74C3C",
+  },
+
+  logoutButtonText: {
+    color: "#fff",
   },
 });

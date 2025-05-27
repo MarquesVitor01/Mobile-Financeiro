@@ -69,12 +69,12 @@ export default function AnalysisScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        {/* <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome name="arrow-left" size={28} color="#fff" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <Text style={styles.title}>Análises</Text>
         <TouchableOpacity
-          onPress={() => alert("Em desenvolvimento")}
+          onPress={() => router.push("/lembretes")}
           style={styles.iconButton}
         >
           <MaterialCommunityIcons name="bell-circle" size={28} color="#fff" />
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#00D09E",
-    paddingTop: 40,
+    paddingTop: 20,
     justifyContent: "space-between",
   },
     iconButton: {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   main: {
     alignItems: "center",
-    marginVertical: 20,
+    marginBottom: 10,
   },
   circleContainer: {
     width: 100,

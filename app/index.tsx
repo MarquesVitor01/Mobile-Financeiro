@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   textLogo: {
     fontFamily: 'Poppins',
-    color: '#ffffff',
+    color: '#0e3e3e',
     fontSize: 48,
     fontWeight: '600',
     marginTop: 20,

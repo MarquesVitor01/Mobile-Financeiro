@@ -48,29 +48,33 @@ export default function PasswordInput({
   );
 }
 
+// PasswordInput.tsx (estilo apenas)
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginBottom: 15,
+    marginBottom: 18,
   },
   label: {
-    marginLeft: 10,
-    marginBottom: 5,
+    marginLeft: 12,
+    marginBottom: 6,
     fontWeight: "600",
-    color: "#0E3E3E",
+    color: "#007B5E",
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E1F3E7",
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    height: 45,
+    backgroundColor: "#E7F5EF",
+    borderRadius: 30,
+    paddingHorizontal: 22,
+    height: 48,
   },
   input: {
     flex: 1,
+    fontSize: 16,
+    color: "#004D40",
   },
   icon: {
-    marginLeft: 10,
+    marginLeft: 12,
   },
 });
+
