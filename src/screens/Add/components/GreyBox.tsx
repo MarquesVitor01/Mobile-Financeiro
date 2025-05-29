@@ -25,6 +25,9 @@ import { useRouter } from "expo-router";
 import { TextInputMask } from "react-native-masked-text";
 import { useUser } from "@/src/context/UserContext";
 
+// Lista de ícones disponíveis (nomes de emojis, mas pode ser qualquer lib de ícones)
+const iconesDisponiveis = ["🍔", "🏖️", "🛒", "💡", "🚗", "🏠", "📚", "🎁"];
+
 export default function GreyBox() {
   const { user } = useUser();
   const router = useRouter();
@@ -37,18 +40,19 @@ export default function GreyBox() {
   const [descricao, setDescricao] = useState("");
 
   // Categorias
-  const categoriasPadrao = ["Comida", "Passeio", "Compras"];
-  const [categorias, setCategorias] = useState<string[]>([]);
+  const [categorias, setCategorias] = useState<
+    { nome: string; icone: string }[]
+  >([]);
   const [novaCategoria, setNovaCategoria] = useState("");
+  const [iconeSelecionado, setIconeSelecionado] = useState("");
   const [modalCategoriasVisible, setModalCategoriasVisible] = useState(false);
+  const [modalIconesVisible, setModalIconesVisible] = useState(false);
 
-  // Modal exclusão
   const [modalExcluirVisible, setModalExcluirVisible] = useState(false);
   const [categoriaParaExcluir, setCategoriaParaExcluir] = useState<
     string | null
   >(null);
 
-  // Carregar categorias do Firestore (apenas do usuário atual, por exemplo)
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -60,33 +64,30 @@ export default function GreyBox() {
         );
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-          // Se não tiver categorias no banco, usar as padrão
-          setCategorias(categoriasPadrao);
-          return;
-        }
-
-        const cats: string[] = [];
+        const cats: { nome: string; icone: string }[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.nome) cats.push(data.nome);
+          if (data.nome && data.icone)
+            cats.push({ nome: data.nome, icone: data.icone });
         });
         setCategorias(cats);
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
-        setCategorias(categoriasPadrao);
       }
     };
 
     carregarCategorias();
   }, [user]);
 
-  // Função para adicionar categoria no Firestore e localmente
   const adicionarCategoria = async () => {
-    const catLower = novaCategoria.trim();
-    if (!catLower) return;
+    const nomeTrim = novaCategoria.trim();
+    if (!nomeTrim || !iconeSelecionado) {
+      alert("Preencha o nome e selecione um ícone.");
+      return;
+    }
 
-    if (categorias.includes(catLower)) {
+    const jaExiste = categorias.some((cat) => cat.nome === nomeTrim);
+    if (jaExiste) {
       alert("Categoria já existe!");
       return;
     }
@@ -98,30 +99,32 @@ export default function GreyBox() {
       }
 
       await addDoc(collection(db, "categorias"), {
-        nome: catLower,
+        nome: nomeTrim,
+        icone: iconeSelecionado,
         userId: user.uid,
       });
 
-      setCategorias((old) => [...old, catLower]);
+      setCategorias((old) => [
+        ...old,
+        { nome: nomeTrim, icone: iconeSelecionado },
+      ]);
       setNovaCategoria("");
+      setIconeSelecionado("");
     } catch (error) {
       console.error("Erro ao adicionar categoria:", error);
       alert("Erro ao adicionar categoria.");
     }
   };
 
-  // Função para pedir exclusão da categoria (abre modal)
   const pedirExcluirCategoria = (cat: string) => {
     setCategoriaParaExcluir(cat);
     setModalExcluirVisible(true);
   };
 
-  // Função para excluir categoria do Firestore e localmente
   const excluirCategoria = async () => {
     if (!categoriaParaExcluir || !user?.uid) return;
 
     try {
-      // Buscar documento da categoria
       const q = query(
         collection(db, "categorias"),
         where("userId", "==", user.uid),
@@ -133,10 +136,9 @@ export default function GreyBox() {
         await deleteDoc(doc(db, "categorias", document.id));
       });
 
-      // Atualizar lista localmente
-      setCategorias((old) => old.filter((c) => c !== categoriaParaExcluir));
-
-      // Limpar seleção se estava selecionada
+      setCategorias((old) =>
+        old.filter((c) => c.nome !== categoriaParaExcluir)
+      );
       if (gasto === categoriaParaExcluir) setGasto("");
 
       setModalExcluirVisible(false);
@@ -148,7 +150,6 @@ export default function GreyBox() {
     }
   };
 
-  // Submit do formulário
   const handleSubmit = async () => {
     if (!nomeGasto || !valor || !setor) {
       alert("Preencha todos os campos obrigatórios.");
@@ -164,11 +165,21 @@ export default function GreyBox() {
         return;
       }
 
+      // Buscar o ícone correspondente à categoria selecionada
+      let iconeGasto = null;
+      if (setor === "saida" && gasto) {
+        const categoriaSelecionada = categorias.find(
+          (cat) => cat.nome === gasto
+        );
+        iconeGasto = categoriaSelecionada ? categoriaSelecionada.icone : null;
+      }
+
       await addDoc(collection(db, "financeiro"), {
         nome: nomeGasto,
         valor: valorEmCentavos,
         setor,
         gasto: setor === "saida" ? gasto : null,
+        icone: setor === "saida" ? iconeGasto : null, // <-- salvando o ícone
         descricao,
         userId: user.uid,
         data: Timestamp.now(),
@@ -195,7 +206,7 @@ export default function GreyBox() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
       >
-        {/* Modal para gerenciar categorias */}
+        {/* Modal Categorias */}
         <Modal
           animationType="slide"
           transparent
@@ -208,19 +219,19 @@ export default function GreyBox() {
 
               <FlatList
                 data={categorias}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => item.nome}
                 style={{ maxHeight: 200, marginBottom: 10 }}
                 renderItem={({ item }) => (
                   <View style={styles.categoriaItem}>
-                    <Text style={styles.categoriaNome}>{item}</Text>
-                    {!categoriasPadrao.includes(item) && (
-                      <TouchableOpacity
-                        style={styles.btnExcluir}
-                        onPress={() => pedirExcluirCategoria(item)}
-                      >
-                        <Text style={styles.textExcluir}>Excluir</Text>
-                      </TouchableOpacity>
-                    )}
+                    <Text style={styles.categoriaNome}>
+                      {item.icone} {item.nome}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.btnExcluir}
+                      onPress={() => pedirExcluirCategoria(item.nome)}
+                    >
+                      <Text style={styles.textExcluir}>Excluir</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               />
@@ -231,8 +242,15 @@ export default function GreyBox() {
                 placeholderTextColor="#666"
                 value={novaCategoria}
                 onChangeText={setNovaCategoria}
-                autoFocus
               />
+
+              <TouchableOpacity onPress={() => setModalIconesVisible(true)}>
+                <Text style={{ marginVertical: 8, color: "#00D09E" }}>
+                  {iconeSelecionado
+                    ? `Ícone: ${iconeSelecionado}`
+                    : "Selecionar ícone"}
+                </Text>
+              </TouchableOpacity>
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -241,7 +259,6 @@ export default function GreyBox() {
                 >
                   <Text style={styles.modalButtonText}>Fechar</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[styles.modalButton, { backgroundColor: "#00D09E" }]}
                   onPress={adicionarCategoria}
@@ -255,7 +272,37 @@ export default function GreyBox() {
           </View>
         </Modal>
 
-        {/* Modal de confirmação de exclusão */}
+        {/* Modal ícones */}
+        <Modal
+          animationType="slide"
+          transparent
+          visible={modalIconesVisible}
+          onRequestClose={() => setModalIconesVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Escolha um Ícone</Text>
+              <FlatList
+                data={iconesDisponiveis}
+                numColumns={4}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={{ margin: 10 }}
+                    onPress={() => {
+                      setIconeSelecionado(item);
+                      setModalIconesVisible(false);
+                    }}
+                  >
+                    <Text style={{ fontSize: 28 }}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal excluir */}
         <Modal
           animationType="fade"
           transparent
@@ -349,7 +396,6 @@ export default function GreyBox() {
                 </Text>
               </TouchableOpacity>
             </View>
-
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={gasto}
@@ -358,7 +404,11 @@ export default function GreyBox() {
               >
                 <Picker.Item label="Escolha..." value="" />
                 {categorias.map((cat) => (
-                  <Picker.Item key={cat} label={cat} value={cat} />
+                  <Picker.Item
+                    key={cat.nome}
+                    label={`${cat.icone} ${cat.nome}`}
+                    value={cat.nome}
+                  />
                 ))}
               </Picker>
             </View>
@@ -400,7 +450,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
-    paddingBottom: 100
+    paddingBottom: 100,
   },
   inputGroup: {
     marginBottom: 20,

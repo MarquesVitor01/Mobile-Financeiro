@@ -8,15 +8,16 @@ import { db } from "@/src/config/firebaseConfig";
 import GreyBox from "./components/GreyBox";
 import { useUser } from "@/src/context/UserContext";
 
-const categorias = [
-  { nome: "passeio", icone: "car" },
-  { nome: "comida", icone: "cutlery" },
-  { nome: "compras", icone: "book" },
-];
+interface Categoria {
+  nome: string;
+  icone: string;
+}
 
 export default function AnalysisScreen() {
   const { user } = useUser();
   const [transactions, setTransactions] = useState<any[]>([]);
+
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriaAtual, setCategoriaAtual] = useState(0);
   const [valorCategoria, setValorCategoria] = useState(0);
 
@@ -54,15 +55,34 @@ export default function AnalysisScreen() {
   }, [user]);
 
   useEffect(() => {
+    // cria lista de categorias dinâmica a partir das transações
+    const categoriaMap = new Map<string, string>();
+    transactions.forEach((t) => {
+      if (t.gasto && !categoriaMap.has(t.gasto)) {
+        categoriaMap.set(t.gasto, t.icone || "question");
+      }
+    });
+    const categoriasArray = Array.from(categoriaMap, ([nome, icone]) => ({
+      nome,
+      icone,
+    }));
+    setCategorias(categoriasArray);
+  }, [transactions]);
+
+  useEffect(() => {
+    if (categorias.length === 0) {
+      setValorCategoria(0);
+      return;
+    }
     const categoria = categorias[categoriaAtual].nome;
     const total = transactions
       .filter((item) => item.setor === "saida" && item.gasto === categoria)
       .reduce((acc, curr) => acc + curr.valor, 0);
-
     setValorCategoria(total);
-  }, [categoriaAtual, transactions]);
+  }, [categoriaAtual, transactions, categorias]);
 
   const trocarCategoria = () => {
+    if (categorias.length === 0) return;
     setCategoriaAtual((prev) => (prev + 1) % categorias.length);
   };
 
@@ -86,15 +106,22 @@ export default function AnalysisScreen() {
           style={styles.circleContainer}
           onPress={trocarCategoria}
         >
-          <FontAwesome
-            name={categorias[categoriaAtual].icone as any}
-            size={30}
-            color="#fff"
-          />
-          <Text style={styles.categoriaNome}>
-            {categorias[categoriaAtual].nome}
-          </Text>
+          {typeof categorias[categoriaAtual]?.icone === "string" &&
+          categorias[categoriaAtual].icone.length <= 2 ? (
+            <Text style={{ fontSize: 40 }}>
+              {categorias[categoriaAtual].icone}
+            </Text>
+          ) : (
+            <FontAwesome
+              name={categorias[categoriaAtual]?.icone as any}
+              size={20}
+              color="#fff"
+            />
+          )}
         </TouchableOpacity>
+        <Text style={styles.categoriaNome}>
+          {categorias[categoriaAtual]?.nome || ""}
+        </Text>
 
         <View style={styles.valorBox}>
           <FontAwesome name="credit-card" size={20} color="#fff" />
@@ -118,7 +145,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     justifyContent: "space-between",
   },
-    iconButton: {
+  iconButton: {
     padding: 8,
   },
   header: {
@@ -146,14 +173,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#00B68D",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
   },
   categoriaNome: {
-    marginTop: 10,
     color: "#fff",
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "600",
     textTransform: "capitalize",
+    alignItems: "center",
+    backgroundColor: "#00B68D",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginBlock: 10
   },
   valorBox: {
     flexDirection: "row",

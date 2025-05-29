@@ -27,6 +27,7 @@ interface TransactionItem {
   valor: number;
   nome: string;
   gasto: string;
+  icone: string;
 }
 
 type Period = "hoje" | "semana" | "mes";
@@ -36,11 +37,10 @@ interface GreyBoxProps {
   totalExpense: number;
 }
 
-const categorias = [
-  { nome: "passeio", icone: "car" },
-  { nome: "comida", icone: "utensils" },
-  { nome: "compras", icone: "shopping-bag" },
-];
+interface Categoria {
+  nome: string;
+  icone: string;
+}
 
 export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   const { user } = useUser();
@@ -50,6 +50,7 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   >([]);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("semana");
 
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriaAtual, setCategoriaAtual] = useState(0);
   const [valorCategoria, setValorCategoria] = useState(0);
   const [gastoPeriodo, setGastoPeriodo] = useState(0);
@@ -63,6 +64,7 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
       try {
         const querySnapshot = await getDocs(collection(db, "financeiro"));
         const allTransactions: TransactionItem[] = [];
+        const categoriaMap = new Map<string, string>(); // Map: categoria -> icone
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
@@ -87,11 +89,28 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
               valor,
               nome: data.nome || "",
               gasto: data.gasto || "",
+              icone: data.icone || "question",
             });
+
+            // Adiciona categoria e icone ao mapa se ainda não tiver
+            if (data.gasto && !categoriaMap.has(data.gasto)) {
+              categoriaMap.set(data.gasto, data.icone || "question");
+            }
           }
         });
 
         setTransactions(allTransactions);
+
+        // Converte o Map para array de objetos
+        const categoriasArray: Categoria[] = Array.from(
+          categoriaMap,
+          ([nome, icone]) => ({
+            nome,
+            icone,
+          })
+        );
+
+        setCategorias(categoriasArray);
       } catch (error) {
         console.error("Erro ao buscar transações:", error);
       }
@@ -140,19 +159,27 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   }, [transactions, selectedPeriod]);
 
   useEffect(() => {
+    if (categorias.length === 0) {
+      setValorCategoria(0);
+      return;
+    }
+
     const categoria = categorias[categoriaAtual].nome;
 
     const total = filteredTransactions
       .filter(
         (item) =>
-          item.setor === "saida" && item.gasto.toLowerCase() === categoria
+          item.setor === "saida" &&
+          item.gasto.toLowerCase() === categoria.toLowerCase()
       )
       .reduce((acc, curr) => acc + curr.valor, 0);
 
     setValorCategoria(total);
-  }, [categoriaAtual, filteredTransactions]);
+  }, [categoriaAtual, filteredTransactions, categorias]);
 
   const trocarCategoria = (direcao: "next" | "prev") => {
+    if (categorias.length === 0) return;
+
     setCategoriaAtual((prev) => {
       if (direcao === "next") {
         return (prev + 1) % categorias.length;
@@ -203,30 +230,34 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
       contentContainerStyle={{ paddingBottom: 150 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.highlightBox} {...panResponder.panHandlers}>
-        <TouchableOpacity
-          style={styles.iconCircle}
-          onPress={() => trocarCategoria("next")}
-        >
-          <FontAwesome5
-            name={categorias[categoriaAtual].icone as any}
-            size={40}
-            color="#00D09E"
-          />
-        </TouchableOpacity>
-        <View style={styles.highlightRight}>
-          <Text style={styles.label}>{categorias[categoriaAtual].nome}</Text>
-          <Text style={styles.value}>
-            R$ {valorCategoria.toFixed(2).replace(".", ",")}
-          </Text>
-          <Text style={[styles.label, { marginTop: 8 }]}>
-            Gastos do Período
-          </Text>
-          <Text style={[styles.value, { color: "#00D09E" }]}>
-            R$ {gastoPeriodo.toFixed(2).replace(".", ",")}
-          </Text>
+      {categorias.length === 0 ? (
+        <Text style={{ textAlign: "center", marginBottom: 20 }}>
+          Nenhuma categoria cadastrada.
+        </Text>
+      ) : (
+        <View style={styles.highlightBox} {...panResponder.panHandlers}>
+          <TouchableOpacity
+            style={styles.iconCircle}
+            onPress={() => trocarCategoria("next")}
+          >
+            <Text style={{ fontSize: 40 }}>
+              {categorias[categoriaAtual].icone}
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.highlightRight}>
+            <Text style={styles.label}>{categorias[categoriaAtual].nome}</Text>
+            <Text style={styles.value}>
+              R$ {valorCategoria.toFixed(2).replace(".", ",")}
+            </Text>
+            <Text style={[styles.label, { marginTop: 8 }]}>
+              Gastos do Período
+            </Text>
+            <Text style={[styles.value, { color: "#00D09E" }]}>
+              R$ {gastoPeriodo.toFixed(2).replace(".", ",")}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <PeriodTabs />
 
@@ -270,7 +301,6 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   containerBox: {
     flex: 1,
@@ -288,14 +318,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 30,
     justifyContent: "space-between",
-    alignItems: "center",  // garante centralização vertical
+    alignItems: "center", // garante centralização vertical
   },
   highlightLeft: {
     alignItems: "center",
     width: "40%",
   },
   iconCircle: {
-    width: 70, 
+    width: 70,
     height: 70,
     borderRadius: 35,
     backgroundColor: "#f0f0f0",

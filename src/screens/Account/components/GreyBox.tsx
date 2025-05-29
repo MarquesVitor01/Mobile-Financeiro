@@ -10,7 +10,7 @@ import {
   Alert,
   Modal,
 } from "react-native";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { Feather, MaterialIcons, Entypo } from "@expo/vector-icons";
 import { format, isValid, parse } from "date-fns";
 import {
   collection,
@@ -19,11 +19,13 @@ import {
   doc,
   query,
   where,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/src/config/firebaseConfig";
 import { useUser } from "@/src/context/UserContext";
 import { ConfirmModal } from "./ConfirmModal";
 import { DatePickerModal } from "./DatePickerModal";
+import { TextInputMask } from "react-native-masked-text";
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
@@ -40,6 +42,7 @@ interface TransactionItem {
   valor: number;
   nome: string;
   gasto: string;
+  descricao: string;
 }
 
 type FilterType = "entrada" | "saida";
@@ -62,8 +65,17 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<TransactionItem | null>(null);
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editData, setEditData] = useState<Partial<TransactionItem>>({});
+
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -100,9 +112,10 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
             iconColor: data.setor === "entrada" ? "#6C63FF" : "#29ABE2",
             rawDate,
             setor: data.setor,
-            valor,
+            valor: data.valorCentavos || "",
             nome: data.nome || "",
             gasto: data.gasto || "",
+            descricao: data.descricao || "",
           });
         });
 
@@ -167,6 +180,84 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
     }
   };
 
+  const openViewModal = (transaction: TransactionItem) => {
+    setSelectedTransaction(transaction);
+    setViewModalVisible(true);
+  };
+
+  const closeViewModal = () => {
+    setSelectedTransaction(null);
+    setViewModalVisible(false);
+  };
+
+  const openEditModal = () => {
+    if (selectedTransaction) {
+      setEditData({ ...selectedTransaction });
+      setEditModalVisible(true);
+    }
+  };
+
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+  };
+
+  const handleEditChange = (
+    field: keyof TransactionItem,
+    value: string | number
+  ) => {
+    setEditData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleEditSave = async () => {
+    if (!editData.id) return;
+
+    try {
+      const updateRef = doc(db, "financeiro", editData.id);
+
+      // Valor em centavos (ex: R$ 12.34 => 1234)
+      const valorCentavos = editData.valor;
+
+      await updateDoc(updateRef, {
+        nome: editData.nome,
+        gasto: editData.gasto,
+        descricao: editData.descricao,
+        valor: valorCentavos,
+      });
+
+      setTransactions((prev) =>
+        prev.map((item) => {
+          if (item.id === editData.id) {
+            const valor = editData.valor ?? item.valor;
+            const setor = editData.setor ?? item.setor;
+            const valorFormatado = (valor / 100).toFixed(2).replace(".", ",");
+            const valueString =
+              (setor === "saida" ? "-" : "") + `R$ ${valorFormatado}`;
+
+            return {
+              ...item,
+              ...editData,
+              valor,
+              value: valueString,
+              label: editData.nome ?? item.label,
+              category: editData.gasto ?? item.category,
+            };
+          }
+          return item;
+        })
+      );
+
+      Alert.alert("Sucesso", "Transação atualizada!");
+      closeEditModal();
+      closeViewModal();
+    } catch (error) {
+      console.error("Erro ao editar transação:", error);
+      Alert.alert("Erro", "Não foi possível atualizar a transação.");
+    }
+  };
+
   const handleSelectDate = (dateString: string) => {
     const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
     if (isValid(parsedDate)) {
@@ -189,7 +280,9 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
           style={styles.dateInput}
         >
           <Text>
-            {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Selecionar Data"}
+            {selectedDate
+              ? format(selectedDate, "dd/MM/yyyy")
+              : "Selecionar Data"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -250,6 +343,14 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
                   <Text style={styles.itemType}>{item.category}</Text>
                   <Text style={styles.itemValue}>{item.value}</Text>
                 </View>
+
+                <TouchableOpacity
+                  onPress={() => openViewModal(item)}
+                  style={{ marginLeft: 10 }}
+                >
+                  <Entypo name="info" size={24} color="#4ECDC4" />
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={() => openConfirm(item.id)}
                   style={{ marginLeft: 10 }}
@@ -283,11 +384,173 @@ export default function GreyBox({ totalBalance, totalExpense }: GreyBoxProps) {
         onCancel={closeConfirm}
         loading={deleting}
       />
+
+      <Modal
+        visible={viewModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeViewModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Detalhes da Transação</Text>
+            {selectedTransaction && (
+              <>
+                <Text>Nome: {selectedTransaction.nome}</Text>
+                <Text>Categoria: {selectedTransaction.gasto}</Text>
+                <Text>Valor: {selectedTransaction.value}</Text>
+                <Text>Data: {selectedTransaction.time}</Text>
+                <Text>Setor: {selectedTransaction.setor}</Text>
+                <Text>Descrição: {selectedTransaction.descricao}</Text>
+              </>
+            )}
+            <TouchableOpacity
+              onPress={closeViewModal}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseText}>Fechar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={openEditModal}
+              style={[styles.modalCloseButton, { backgroundColor: "#6C63FF" }]}
+            >
+              <Text style={styles.modalCloseText}>Editar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeEditModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Editar Transação</Text>
+
+            <TextInput
+              placeholder="Nome"
+              value={editData.nome}
+              onChangeText={(text) => handleEditChange("nome", text)}
+              style={styles.input}
+            />
+
+            <TextInput
+              placeholder="Categoria"
+              value={editData.gasto}
+              onChangeText={(text) => handleEditChange("gasto", text)}
+              style={styles.input}
+            />
+
+<TextInputMask
+  type={"money"}
+  options={{
+    precision: 2,
+    separator: ",",
+    delimiter: ".",
+    unit: "R$ ",
+  }}
+  value={
+    editData.valor !== undefined
+      ? (editData.valor / 100).toFixed(2).replace(".", ",") // valor em reais formatado
+      : ""
+  }
+  onChangeText={(text) => {
+    // Remove tudo que não for número e vírgula
+    const valorLimpo = text.replace(/[^\d,]/g, "");
+
+    // Troca vírgula por ponto para parseFloat
+    const valorComPonto = valorLimpo.replace(",", ".");
+
+    // Converte para número decimal em reais
+    const valorNumero = parseFloat(valorComPonto) || 0;
+
+    // Converte para centavos (inteiro)
+    const valorCentavos = Math.round(valorNumero * 100);
+
+    handleEditChange("valor", valorCentavos);
+  }}
+  style={styles.input}
+  keyboardType="numeric"
+/>
+
+
+
+            <TextInput
+              placeholder="Descrição"
+              value={editData.descricao}
+              onChangeText={(text) => handleEditChange("descricao", text)}
+              style={styles.input}
+            />
+
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <TouchableOpacity
+                onPress={closeEditModal}
+                style={[
+                  styles.modalCloseButton,
+                  { backgroundColor: "#E63946" },
+                ]}
+              >
+                <Text style={styles.modalCloseText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleEditSave}
+                style={[
+                  styles.modalCloseButton,
+                  { backgroundColor: "#6C63FF" },
+                ]}
+              >
+                <Text style={styles.modalCloseText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
-
 const styles = StyleSheet.create({
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalCloseButton: {
+    marginTop: 20,
+    backgroundColor: "#E63946",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  modalCloseText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   dateInput: {
     backgroundColor: "#fff",
     paddingVertical: 12,

@@ -19,10 +19,14 @@ export default function GreyBox() {
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [numero, setNumero] = useState(""); // Armazena só os dígitos
+  const [numero, setNumero] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+
+  // Novos estados para controlar a visibilidade da senha
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
 
   const formatarData = (texto: string) => {
     const numeros = texto.replace(/\D/g, "");
@@ -75,7 +79,7 @@ export default function GreyBox() {
         uid: user.uid,
         nome,
         email,
-        numero, // aqui vai sem formatação
+        numero,
         dataNascimento,
         criadoEm: new Date(),
       });
@@ -123,7 +127,7 @@ export default function GreyBox() {
         value={formatarNumero(numero)}
         onChangeText={handleNumeroChange}
         keyboardType="phone-pad"
-        maxLength={15} // Limite máximo para a máscara
+        maxLength={15}
       />
       <Text style={styles.label}>Data de Nascimento</Text>
       <TextInput
@@ -140,22 +144,42 @@ export default function GreyBox() {
         <TextInput
           style={styles.inputPassword}
           placeholder="********"
-          secureTextEntry
+          secureTextEntry={!mostrarSenha} // controla visibilidade
           value={senha}
           onChangeText={setSenha}
         />
-        <FontAwesome name="eye" size={20} color="#555" style={styles.eyeIcon} />
+        <TouchableOpacity
+          onPress={() => setMostrarSenha(!mostrarSenha)}
+          style={styles.eyeIcon}
+          activeOpacity={0.7}
+        >
+          <FontAwesome
+            name={mostrarSenha ? "eye-slash" : "eye"}
+            size={20}
+            color="#555"
+          />
+        </TouchableOpacity>
       </View>
       <Text style={styles.label}>Confirmar Senha</Text>
       <View style={styles.passwordContainer}>
         <TextInput
           style={styles.inputPassword}
           placeholder="********"
-          secureTextEntry
+          secureTextEntry={!mostrarConfirmarSenha} // controla visibilidade
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
         />
-        <FontAwesome name="eye" size={20} color="#555" style={styles.eyeIcon} />
+        <TouchableOpacity
+          onPress={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)}
+          style={styles.eyeIcon}
+          activeOpacity={0.7}
+        >
+          <FontAwesome
+            name={mostrarConfirmarSenha ? "eye-slash" : "eye"}
+            size={20}
+            color="#555"
+          />
+        </TouchableOpacity>
       </View>
       <Text style={styles.fingerprintText}>By continuing, you agree to</Text>
       <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
@@ -180,7 +204,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 50,
   },
   contentContainer: {
-    flexGrow: 1, // para preencher a tela e permitir scroll
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -215,6 +239,8 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: "absolute",
     right: 15,
+    height: 45,
+    justifyContent: "center",
   },
   loginButton: {
     backgroundColor: "#00D09E",
@@ -228,33 +254,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  forgotText: {
-    color: "#000",
-    marginTop: 10,
-    fontSize: 12,
-  },
-  signUpButton: {
-    backgroundColor: "#E1F3E7",
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    marginTop: 10,
-  },
-  signUpText: {
-    fontWeight: "bold",
-    color: "#00D09E",
-    fontSize: 16,
-  },
   fingerprintText: {
     marginTop: 20,
     color: "#333",
     fontSize: 13,
-  },
-  socialContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "40%",
-    marginTop: 20,
   },
   bottomText: {
     marginTop: 20,
